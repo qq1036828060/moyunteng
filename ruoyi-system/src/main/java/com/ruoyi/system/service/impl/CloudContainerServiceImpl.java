@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.system.cloud.MoyuntengSdkClient;
+import com.ruoyi.system.cloud.MytAndroidContainer;
 import com.ruoyi.system.domain.CloudContainer;
 import com.ruoyi.system.domain.CloudHost;
 import com.ruoyi.system.mapper.CloudContainerMapper;
@@ -39,21 +40,27 @@ public class CloudContainerServiceImpl implements ICloudContainerService
     public void startContainer(Long containerId)
     {
         CloudContainer container = requireContainer(containerId);
-        moyuntengSdkClient.startAndroid(requireHost(container.getHostId()), container.getContainerName());
+        CloudHost host = requireHost(container.getHostId());
+        moyuntengSdkClient.startAndroid(host, container.getContainerName());
+        refreshContainerFromSdk(host, container);
     }
 
     @Override
     public void stopContainer(Long containerId)
     {
         CloudContainer container = requireContainer(containerId);
-        moyuntengSdkClient.stopAndroid(requireHost(container.getHostId()), container.getContainerName());
+        CloudHost host = requireHost(container.getHostId());
+        moyuntengSdkClient.stopAndroid(host, container.getContainerName());
+        refreshContainerFromSdk(host, container);
     }
 
     @Override
     public void restartContainer(Long containerId)
     {
         CloudContainer container = requireContainer(containerId);
-        moyuntengSdkClient.restartAndroid(requireHost(container.getHostId()), container.getContainerName());
+        CloudHost host = requireHost(container.getHostId());
+        moyuntengSdkClient.restartAndroid(host, container.getContainerName());
+        refreshContainerFromSdk(host, container);
     }
 
     @Override
@@ -67,7 +74,7 @@ public class CloudContainerServiceImpl implements ICloudContainerService
         CloudContainer container = cloudContainerMapper.selectCloudContainerById(containerId);
         if (container == null)
         {
-            throw new ServiceException("云机容器不存在");
+            throw new ServiceException("Cloud container does not exist");
         }
         return container;
     }
@@ -77,9 +84,53 @@ public class CloudContainerServiceImpl implements ICloudContainerService
         CloudHost host = cloudHostMapper.selectCloudHostById(hostId);
         if (host == null)
         {
-            throw new ServiceException("魔云腾主机不存在");
+            throw new ServiceException("Cloud host does not exist");
         }
         return host;
+    }
+
+    private void refreshContainerFromSdk(CloudHost host, CloudContainer container)
+    {
+        sleepAfterCommand();
+        List<MytAndroidContainer> containers = moyuntengSdkClient.listAndroid(host);
+        for (MytAndroidContainer item : containers)
+        {
+            if (container.getProviderContainerId().equals(item.getId())
+                    || container.getContainerName().equals(item.getName()))
+            {
+                CloudContainer update = new CloudContainer();
+                update.setContainerId(container.getContainerId());
+                update.setContainerName(item.getName());
+                update.setInstanceId(item.getId());
+                update.setIndexNum(item.getIndexNum());
+                update.setContainerStatus(item.getStatus());
+                update.setAndroidType(item.getAndroidType());
+                update.setContainerIp(item.getIp());
+                update.setNetworkName(item.getNetworkName());
+                update.setImage(item.getImage());
+                update.setWidth(item.getWidth());
+                update.setHeight(item.getHeight());
+                update.setDpi(item.getDpi());
+                update.setWebrtcTcpPort(item.getWebrtcTcpPort());
+                update.setWebrtcUdpPort(item.getWebrtcUdpPort());
+                update.setAdbPort(item.getAdbPort());
+                update.setRawJson(item.getRawJson());
+                cloudContainerMapper.updateCloudContainer(update);
+                return;
+            }
+        }
+    }
+
+    private void sleepAfterCommand()
+    {
+        try
+        {
+            Thread.sleep(1200L);
+        }
+        catch (InterruptedException e)
+        {
+            Thread.currentThread().interrupt();
+        }
     }
 }
 
