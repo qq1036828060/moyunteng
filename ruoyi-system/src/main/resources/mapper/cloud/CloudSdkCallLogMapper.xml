@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.CloudSdkCallLogMapper">
+
+    <resultMap type="CloudSdkCallLog" id="CloudSdkCallLogResult">
+        <id property="logId" column="log_id"/>
+        <result property="hostId" column="host_id"/>
+        <result property="taskId" column="task_id"/>
+        <result property="containerId" column="container_id"/>
+        <result property="apiPath" column="api_path"/>
+        <result property="httpMethod" column="http_method"/>
+        <result property="requestBody" column="request_body"/>
+        <result property="responseBody" column="response_body"/>
+        <result property="resultCode" column="result_code"/>
+        <result property="success" column="success"/>
+        <result property="errorMsg" column="error_msg"/>
+        <result property="costMs" column="cost_ms"/>
+        <result property="createTime" column="create_time"/>
+    </resultMap>
+
+    <select id="selectCloudSdkCallLogList" parameterType="CloudSdkCallLog" resultMap="CloudSdkCallLogResult">
+        select log_id, host_id, task_id, container_id, api_path, http_method, request_body,
+               response_body, result_code, success, error_msg, cost_ms, create_time
+        from cloud_sdk_call_log
+        <where>
+            <if test="hostId != null">and host_id = #{hostId}</if>
+            <if test="apiPath != null and apiPath != ''">and api_path like concat('%', #{apiPath}, '%')</if>
+            <if test="success != null and success != ''">and success = #{success}</if>
+        </where>
+        order by log_id desc
+    </select>
+
+    <insert id="insertCloudSdkCallLog" parameterType="CloudSdkCallLog">
+        insert into cloud_sdk_call_log(host_id, task_id, container_id, api_path, http_method,
+                                       request_body, response_body, result_code, success, error_msg,
+                                       cost_ms, create_time)
+        values(#{hostId}, #{taskId}, #{containerId}, #{apiPath}, #{httpMethod},
+               #{requestBody}, #{responseBody}, #{resultCode}, #{success}, #{errorMsg},
+               #{costMs}, sysdate())
+    </insert>
+</mapper>
+

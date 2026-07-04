@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.CloudContainerMapper">
+
+    <resultMap type="CloudContainer" id="CloudContainerResult">
+        <id property="containerId" column="container_id"/>
+        <result property="hostId" column="host_id"/>
+        <result property="providerContainerId" column="provider_container_id"/>
+        <result property="containerName" column="container_name"/>
+        <result property="instanceId" column="instance_id"/>
+        <result property="indexNum" column="index_num"/>
+        <result property="containerStatus" column="container_status"/>
+        <result property="scheduleStatus" column="schedule_status"/>
+        <result property="androidType" column="android_type"/>
+        <result property="containerIp" column="container_ip"/>
+        <result property="networkName" column="network_name"/>
+        <result property="image" column="image"/>
+        <result property="width" column="width"/>
+        <result property="height" column="height"/>
+        <result property="dpi" column="dpi"/>
+        <result property="webrtcTcpPort" column="webrtc_tcp_port"/>
+        <result property="webrtcUdpPort" column="webrtc_udp_port"/>
+        <result property="adbPort" column="adb_port"/>
+        <result property="currentTaskId" column="current_task_id"/>
+        <result property="boundAccountId" column="bound_account_id"/>
+        <result property="lockOwner" column="lock_owner"/>
+        <result property="lockExpireTime" column="lock_expire_time"/>
+        <result property="lastHeartbeatTime" column="last_heartbeat_time"/>
+        <result property="rawJson" column="raw_json"/>
+        <result property="remark" column="remark"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="delFlag" column="del_flag"/>
+    </resultMap>
+
+    <sql id="selectCloudContainerVo">
+        select container_id, host_id, provider_container_id, container_name, instance_id, index_num,
+               container_status, schedule_status, android_type, container_ip, network_name, image,
+               width, height, dpi, webrtc_tcp_port, webrtc_udp_port, adb_port, current_task_id,
+               bound_account_id, lock_owner, lock_expire_time, last_heartbeat_time, raw_json,
+               remark, create_by, create_time, update_by, update_time, del_flag
+        from cloud_container
+    </sql>
+
+    <select id="selectCloudContainerList" parameterType="CloudContainer" resultMap="CloudContainerResult">
+        <include refid="selectCloudContainerVo"/>
+        <where>
+            del_flag = '0'
+            <if test="hostId != null">and host_id = #{hostId}</if>
+            <if test="containerName != null and containerName != ''">and container_name like concat('%', #{containerName}, '%')</if>
+            <if test="containerStatus != null and containerStatus != ''">and container_status = #{containerStatus}</if>
+            <if test="scheduleStatus != null and scheduleStatus != ''">and schedule_status = #{scheduleStatus}</if>
+            <if test="indexNum != null">and index_num = #{indexNum}</if>
+        </where>
+        order by host_id asc, index_num asc, container_id asc
+    </select>
+
+    <select id="selectCloudContainerById" parameterType="Long" resultMap="CloudContainerResult">
+        <include refid="selectCloudContainerVo"/>
+        where container_id = #{containerId} and del_flag = '0'
+    </select>
+
+    <select id="selectCloudContainerByProviderId" parameterType="CloudContainer" resultMap="CloudContainerResult">
+        <include refid="selectCloudContainerVo"/>
+        where host_id = #{hostId} and provider_container_id = #{providerContainerId} and del_flag = '0'
+    </select>
+
+    <insert id="insertCloudContainer" parameterType="CloudContainer" useGeneratedKeys="true" keyProperty="containerId">
+        insert into cloud_container(host_id, provider_container_id, container_name, instance_id, index_num,
+                                    container_status, schedule_status, android_type, container_ip, network_name,
+                                    image, width, height, dpi, webrtc_tcp_port, webrtc_udp_port, adb_port,
+                                    raw_json, create_by, create_time)
+        values(#{hostId}, #{providerContainerId}, #{containerName}, #{instanceId}, #{indexNum},
+               #{containerStatus}, #{scheduleStatus}, #{androidType}, #{containerIp}, #{networkName},
+               #{image}, #{width}, #{height}, #{dpi}, #{webrtcTcpPort}, #{webrtcUdpPort}, #{adbPort},
+               #{rawJson}, #{createBy}, sysdate())
+    </insert>
+
+    <update id="updateCloudContainer" parameterType="CloudContainer">
+        update cloud_container
+        <set>
+            <if test="containerName != null">container_name = #{containerName},</if>
+            <if test="instanceId != null">instance_id = #{instanceId},</if>
+            <if test="indexNum != null">index_num = #{indexNum},</if>
+            <if test="containerStatus != null">container_status = #{containerStatus},</if>
+            <if test="scheduleStatus != null">schedule_status = #{scheduleStatus},</if>
+            <if test="androidType != null">android_type = #{androidType},</if>
+            <if test="containerIp != null">container_ip = #{containerIp},</if>
+            <if test="networkName != null">network_name = #{networkName},</if>
+            <if test="image != null">image = #{image},</if>
+            <if test="width != null">width = #{width},</if>
+            <if test="height != null">height = #{height},</if>
+            <if test="dpi != null">dpi = #{dpi},</if>
+            <if test="webrtcTcpPort != null">webrtc_tcp_port = #{webrtcTcpPort},</if>
+            <if test="webrtcUdpPort != null">webrtc_udp_port = #{webrtcUdpPort},</if>
+            <if test="adbPort != null">adb_port = #{adbPort},</if>
+            <if test="rawJson != null">raw_json = #{rawJson},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            update_time = sysdate()
+        </set>
+        where container_id = #{containerId}
+    </update>
+
+    <insert id="upsertCloudContainer" parameterType="CloudContainer">
+        insert into cloud_container(host_id, provider_container_id, container_name, instance_id, index_num,
+                                    container_status, schedule_status, android_type, container_ip, network_name,
+                                    image, width, height, dpi, webrtc_tcp_port, webrtc_udp_port, adb_port,
+                                    raw_json, create_by, create_time, update_time)
+        values(#{hostId}, #{providerContainerId}, #{containerName}, #{instanceId}, #{indexNum},
+               #{containerStatus}, #{scheduleStatus}, #{androidType}, #{containerIp}, #{networkName},
+               #{image}, #{width}, #{height}, #{dpi}, #{webrtcTcpPort}, #{webrtcUdpPort}, #{adbPort},
+               #{rawJson}, #{createBy}, sysdate(), sysdate())
+        on duplicate key update
+            container_name = values(container_name),
+            instance_id = values(instance_id),
+            index_num = values(index_num),
+            container_status = values(container_status),
+            android_type = values(android_type),
+            container_ip = values(container_ip),
+            network_name = values(network_name),
+            image = values(image),
+            width = values(width),
+            height = values(height),
+            dpi = values(dpi),
+            webrtc_tcp_port = values(webrtc_tcp_port),
+            webrtc_udp_port = values(webrtc_udp_port),
+            adb_port = values(adb_port),
+            raw_json = values(raw_json),
+            del_flag = '0',
+            update_time = sysdate()
+    </insert>
+
+    <update id="releaseCloudContainer" parameterType="Long">
+        update cloud_container
+        set schedule_status = 'IDLE', current_task_id = null, lock_owner = null, lock_expire_time = null, update_time = sysdate()
+        where container_id = #{containerId}
+    </update>
+</mapper>
+
