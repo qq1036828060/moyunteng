@@ -89,6 +89,19 @@ export const constantRoutes = [
         meta: { title: '个人中心', icon: 'user' }
       }
     ]
+  },
+  {
+    path: '/cloud/my-container-control',
+    component: Layout,
+    hidden: true,
+    children: [
+      {
+        path: 'control/:containerId(\\d+)',
+        component: () => import('@/views/cloud/myContainer/control'),
+        name: 'CloudMyContainerControl',
+        meta: { title: '云机控制', activeMenu: '/cloud/my-container' }
+      }
+    ]
   }
 ]
 

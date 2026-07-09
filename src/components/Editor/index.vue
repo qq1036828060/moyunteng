@@ -35,7 +35,7 @@ import { getToken } from "@/utils/auth"
 const { proxy } = getCurrentInstance()
 
 const quillEditorRef = ref()
-const uploadUrl = ref(import.meta.env.VITE_APP_BASE_API + "/common/upload") // 上传的图片服务器地址
+const uploadUrl = ref("https://h5.61xm.cn/prod-api/upload/image") // 上传的图片服务器地址
 const headers = ref({
   Authorization: "Bearer " + getToken()
 })
@@ -153,12 +153,13 @@ function handleBeforeUpload(file) {
 function handleUploadSuccess(res, file) {
   // 如果上传成功
   if (res.code == 200) {
+    const imageUrl = res.data?.filePath || res.url || res.fileName
     // 获取富文本实例
     let quill = toRaw(quillEditorRef.value).getQuill()
     // 获取光标位置
     let length = quill.selection.savedRange.index
     // 插入图片，res.url为服务器返回的图片链接地址
-    quill.insertEmbed(length, "image", import.meta.env.VITE_APP_BASE_API + res.fileName)
+    quill.insertEmbed(length, "image", imageUrl)
     // 调整光标到最后
     quill.setSelection(length + 1)
   } else {

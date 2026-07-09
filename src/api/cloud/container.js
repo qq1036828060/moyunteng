@@ -36,10 +36,32 @@ export function restartContainer(containerId) {
   })
 }
 
+export function assignContainer(data) {
+  return request({
+    url: '/cloud/container/assign',
+    method: 'post',
+    data: data
+  })
+}
+
+export function unassignContainer(containerId) {
+  return request({
+    url: '/cloud/container/' + containerId + '/unassign',
+    method: 'post'
+  })
+}
+
+export function unassignContainerSlot(data) {
+  return request({
+    url: '/cloud/container/unassign-slot',
+    method: 'post',
+    data: data
+  })
+}
+
 export function releaseContainer(containerId) {
   return request({
     url: '/cloud/container/' + containerId + '/release',
     method: 'post'
   })
 }
-

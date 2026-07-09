@@ -57,7 +57,7 @@ const props = defineProps({
   // 上传接口地址
   action: {
     type: String,
-    default: "/common/upload"
+    default: "https://h5.61xm.cn/prod-api/upload/image"
   },
   // 上传携带的参数
   data: {
@@ -102,7 +102,8 @@ const uploadList = ref([])
 const dialogImageUrl = ref("")
 const dialogVisible = ref(false)
 const baseUrl = import.meta.env.VITE_APP_BASE_API
-const uploadImgUrl = ref(import.meta.env.VITE_APP_BASE_API + props.action) // 上传的图片服务器地址
+const getUploadUrl = (action) => isExternal(action) ? action : import.meta.env.VITE_APP_BASE_API + action
+const uploadImgUrl = ref(getUploadUrl(props.action)) // 上传的图片服务器地址
 const headers = ref({ Authorization: "Bearer " + getToken() })
 const fileList = ref([])
 const showTip = computed(
@@ -173,7 +174,9 @@ function handleExceed() {
 // 上传成功回调
 function handleUploadSuccess(res, file) {
   if (res.code === 200) {
-    uploadList.value.push({ name: res.fileName, url: res.fileName })
+    const fileName = res.data?.fileName || res.fileName
+    const filePath = res.data?.filePath || res.url || res.fileName
+    uploadList.value.push({ name: fileName, url: filePath })
     uploadedSuccessfully()
   } else {
     number.value--
