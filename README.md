@@ -108,3 +108,11 @@
 - [x] 二维码图片上传采用覆盖模式：同一容器固定写入 `qq_scan_{containerId}.{ext}`，避免每次扫码都在安卓实例中生成新文件。
 - [x] `/upload/qq_scan_{containerId}.{ext}` 是 Android API 资源路径，不等同于安卓 shell 文件系统目录；后端不再用 shell 校验 `/upload` 目录，上传 HTTP 成功后直接把该路径传给 `modifydev`。
 - [x] 安卓 API 地址优先使用魔云腾主机 IP + 实例位端口，例如实例位 1 使用 `30001`，避免误连不可达的容器内网 IP。
+## 2026-07-09 S5 proxy update
+
+- [x] Parse S5 proxy fields from Moyunteng `GET /android`: `s5IP`, `s5Port`, `s5User`, `s5Password`, `s5Type`.
+- [x] Add user-side APIs:
+  - `PUT /cloud/my/container/{containerId}/proxy/s5` to set or disable S5 proxy.
+  - `GET /cloud/my/container/{containerId}/proxy/s5` to refresh and query current S5 proxy status.
+- [x] S5 status is derived from the latest Moyunteng cloud machine list response and returned in user cloud machine list as `s5Status`.
+- [x] No database schema change is required; S5 values are read from `raw_json` after SDK sync/refresh.

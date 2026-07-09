@@ -17,6 +17,7 @@ import com.google.zxing.MultiFormatReader;
 import com.google.zxing.Result;
 import com.google.zxing.client.j2se.BufferedImageLuminanceSource;
 import com.google.zxing.common.HybridBinarizer;
+import com.alibaba.fastjson2.JSONObject;
 import com.ruoyi.common.config.RuoYiConfig;
 import com.ruoyi.common.core.domain.entity.SysUser;
 import com.ruoyi.common.exception.ServiceException;
@@ -27,6 +28,7 @@ import com.ruoyi.system.cloud.MoyuntengSdkClient;
 import com.ruoyi.system.cloud.MytAndroidContainer;
 import com.ruoyi.system.domain.CloudContainer;
 import com.ruoyi.system.domain.CloudContainerAssignRequest;
+import com.ruoyi.system.domain.CloudContainerProxyRequest;
 import com.ruoyi.system.domain.CloudHost;
 import com.ruoyi.system.mapper.CloudContainerMapper;
 import com.ruoyi.system.mapper.CloudHostMapper;
@@ -381,6 +383,55 @@ public class CloudContainerServiceImpl implements ICloudContainerService
         return result;
     }
 
+    @Override
+    public CloudContainer setMyContainerS5Proxy(Long userId, Long containerId, CloudContainerProxyRequest request)
+    {
+        if (request == null)
+        {
+            throw new ServiceException("S5代理参数不能为空");
+        }
+        CloudContainer container = requireOwnedContainer(userId, containerId);
+        CloudHost host = requireHost(container.getHostId());
+        normalizeS5ProxyRequest(request);
+        moyuntengSdkClient.updateS5Proxy(host, container.getContainerName(), request);
+        refreshContainerFromSdk(host, container);
+        return requireOwnedContainer(userId, containerId);
+    }
+
+    @Override
+    public CloudContainer getMyContainerS5ProxyStatus(Long userId, Long containerId)
+    {
+        CloudContainer container = requireOwnedContainer(userId, containerId);
+        CloudHost host = requireHost(container.getHostId());
+        refreshContainerFromSdk(host, container);
+        return requireOwnedContainer(userId, containerId);
+    }
+
+    private void normalizeS5ProxyRequest(CloudContainerProxyRequest request)
+    {
+        request.setS5Type(StringUtils.isBlank(request.getS5Type()) ? "1" : request.getS5Type().trim());
+        if ("0".equals(request.getS5Type()))
+        {
+            request.setS5Ip("");
+            request.setS5Port("");
+            request.setS5User("");
+            request.setS5Password("");
+            return;
+        }
+        request.setS5Ip(StringUtils.defaultString(request.getS5Ip()).trim());
+        request.setS5Port(StringUtils.defaultString(request.getS5Port()).trim());
+        request.setS5User(StringUtils.defaultString(request.getS5User()).trim());
+        request.setS5Password(StringUtils.defaultString(request.getS5Password()).trim());
+        if (StringUtils.isBlank(request.getS5Ip()))
+        {
+            throw new ServiceException("S5代理IP不能为空");
+        }
+        if (StringUtils.isBlank(request.getS5Port()))
+        {
+            throw new ServiceException("S5代理端口不能为空");
+        }
+    }
+
     private void openQq(CloudHost host, CloudContainer container)
     {
         moyuntengSdkClient.connectRpa(host, container.getContainerName());
@@ -569,8 +620,39 @@ public class CloudContainerServiceImpl implements ICloudContainerService
         {
             container.setCloudMachineType(StringUtils.isBlank(container.getAndroidType()) ? "未知" : container.getAndroidType());
         }
+        fillS5ProxyStatus(container);
         fillDerivedPorts(container);
         return container;
+    }
+
+    private void fillS5ProxyStatus(CloudContainer container)
+    {
+        if (StringUtils.isBlank(container.getRawJson()))
+        {
+            container.setS5Status("未开启");
+            return;
+        }
+        try
+        {
+            JSONObject json = JSONObject.parseObject(container.getRawJson());
+            container.setS5User(json.getString("s5User"));
+            container.setS5Password(json.getString("s5Password"));
+            container.setS5Ip(json.getString("s5IP"));
+            container.setS5Port(json.getString("s5Port"));
+            container.setS5Type(json.getString("s5Type"));
+            if ("0".equals(container.getS5Type()) || StringUtils.isBlank(container.getS5Ip()))
+            {
+                container.setS5Status("未开启");
+            }
+            else
+            {
+                container.setS5Status(container.getS5Ip() + ":" + StringUtils.defaultString(container.getS5Port()));
+            }
+        }
+        catch (Exception e)
+        {
+            container.setS5Status("未知");
+        }
     }
 
     private void fillDerivedPorts(CloudContainer container)

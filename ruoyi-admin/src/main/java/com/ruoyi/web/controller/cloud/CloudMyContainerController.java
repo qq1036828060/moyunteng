@@ -19,6 +19,7 @@ import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.common.core.page.TableDataInfo;
 import com.ruoyi.common.enums.BusinessType;
 import com.ruoyi.system.domain.CloudContainer;
+import com.ruoyi.system.domain.CloudContainerProxyRequest;
 import com.ruoyi.system.service.ICloudContainerService;
 
 @RestController
@@ -84,6 +85,21 @@ public class CloudMyContainerController extends BaseController
     public AjaxResult bindAccount(@PathVariable Long containerId, @RequestBody Map<String, String> body)
     {
         return toAjax(cloudContainerService.bindMyContainerAccount(getUserId(), containerId, body.get("boundAccountNo")));
+    }
+
+    @PreAuthorize("@ss.hasPermi('cloud:mycontainer:operate')")
+    @Log(title = "S5 Proxy", businessType = BusinessType.UPDATE)
+    @PutMapping("/{containerId}/proxy/s5")
+    public AjaxResult setS5Proxy(@PathVariable Long containerId, @RequestBody CloudContainerProxyRequest request)
+    {
+        return success(cloudContainerService.setMyContainerS5Proxy(getUserId(), containerId, request));
+    }
+
+    @PreAuthorize("@ss.hasPermi('cloud:mycontainer:operate')")
+    @GetMapping("/{containerId}/proxy/s5")
+    public AjaxResult getS5Proxy(@PathVariable Long containerId)
+    {
+        return success(cloudContainerService.getMyContainerS5ProxyStatus(getUserId(), containerId));
     }
 
     @PreAuthorize("@ss.hasPermi('cloud:mycontainer:operate')")

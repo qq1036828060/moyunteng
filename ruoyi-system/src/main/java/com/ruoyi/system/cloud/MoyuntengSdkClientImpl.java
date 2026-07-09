@@ -19,6 +19,7 @@ import com.alibaba.fastjson2.JSONObject;
 import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.common.utils.StringUtils;
 import com.ruoyi.system.domain.CloudContainer;
+import com.ruoyi.system.domain.CloudContainerProxyRequest;
 import com.ruoyi.system.domain.CloudHost;
 import com.ruoyi.system.domain.CloudSdkCallLog;
 import com.ruoyi.system.mapper.CloudSdkCallLogMapper;
@@ -75,6 +76,11 @@ public class MoyuntengSdkClientImpl implements MoyuntengSdkClient
             container.setCameraUdpPort(readHostPort(item, "10007/udp"));
             container.setWebrtcTcpPort(readHostPort(item, "10008/tcp"));
             container.setWebrtcUdpPort(readHostPort(item, "10008/udp"));
+            container.setS5User(item.getString("s5User"));
+            container.setS5Password(item.getString("s5Password"));
+            container.setS5Ip(item.getString("s5IP"));
+            container.setS5Port(item.getString("s5Port"));
+            container.setS5Type(item.getString("s5Type"));
             fillPortsByIndex(container);
             container.setRawJson(item.toJSONString());
             result.add(container);
@@ -198,6 +204,34 @@ public class MoyuntengSdkClientImpl implements MoyuntengSdkClient
             }
             return androidExec(host, containerName, command);
         }
+    }
+
+    @Override
+    public void updateS5Proxy(CloudHost host, String containerName, CloudContainerProxyRequest request)
+    {
+        JSONObject body = new JSONObject();
+        body.put("name", containerName);
+        String s5Type = StringUtils.isBlank(request.getS5Type()) ? "1" : request.getS5Type();
+        body.put("s5Type", s5Type);
+        body.put("s5IP", StringUtils.defaultString(request.getS5Ip()));
+        body.put("s5Port", StringUtils.defaultString(request.getS5Port()));
+        body.put("s5User", StringUtils.defaultString(request.getS5User()));
+        body.put("s5Password", StringUtils.defaultString(request.getS5Password()));
+        request(host, "PUT", "/android", body.toJSONString());
+    }
+
+    @Override
+    public MytAndroidContainer getAndroidByName(CloudHost host, String containerName)
+    {
+        List<MytAndroidContainer> containers = listAndroid(host);
+        for (MytAndroidContainer item : containers)
+        {
+            if (containerName.equals(item.getName()))
+            {
+                return item;
+            }
+        }
+        return null;
     }
 
     @Override
@@ -375,10 +409,10 @@ public class MoyuntengSdkClientImpl implements MoyuntengSdkClient
             HttpRequest.Builder builder = HttpRequest.newBuilder()
                     .uri(URI.create(baseUrl(host) + path))
                     .timeout(Duration.ofSeconds(10));
-            if ("POST".equals(method))
+            if ("POST".equals(method) || "PUT".equals(method))
             {
                 builder.header("Content-Type", "application/json")
-                        .POST(HttpRequest.BodyPublishers.ofString(body == null ? "{}" : body));
+                        .method(method, HttpRequest.BodyPublishers.ofString(body == null ? "{}" : body));
             }
             else
             {

@@ -5,6 +5,7 @@ import java.util.Map;
 import org.springframework.web.multipart.MultipartFile;
 import com.ruoyi.system.domain.CloudContainer;
 import com.ruoyi.system.domain.CloudContainerAssignRequest;
+import com.ruoyi.system.domain.CloudContainerProxyRequest;
 
 public interface ICloudContainerService
 {
@@ -31,6 +32,10 @@ public interface ICloudContainerService
     Map<String, Object> openMyContainerQq(Long userId, Long containerId);
 
     Map<String, Object> scanMyContainerQq(Long userId, Long containerId, MultipartFile file, String filePath) throws Exception;
+
+    CloudContainer setMyContainerS5Proxy(Long userId, Long containerId, CloudContainerProxyRequest request);
+
+    CloudContainer getMyContainerS5ProxyStatus(Long userId, Long containerId);
 
     void startContainer(Long containerId);
 

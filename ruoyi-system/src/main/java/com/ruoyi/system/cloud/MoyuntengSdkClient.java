@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 import org.springframework.web.multipart.MultipartFile;
 import com.ruoyi.system.domain.CloudContainer;
+import com.ruoyi.system.domain.CloudContainerProxyRequest;
 import com.ruoyi.system.domain.CloudHost;
 
 public interface MoyuntengSdkClient
@@ -27,6 +28,10 @@ public interface MoyuntengSdkClient
     void click(CloudHost host, String containerName, int x, int y);
 
     Map<String, Object> shell(CloudHost host, String containerName, String command, int timeoutSeconds);
+
+    void updateS5Proxy(CloudHost host, String containerName, CloudContainerProxyRequest request);
+
+    MytAndroidContainer getAndroidByName(CloudHost host, String containerName);
 
     String uploadAndroidFile(CloudHost host, CloudContainer container, MultipartFile file, String remoteFileName);
 
