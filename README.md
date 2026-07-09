@@ -116,3 +116,9 @@
   - `GET /cloud/my/container/{containerId}/proxy/s5` to refresh and query current S5 proxy status.
 - [x] S5 status is derived from the latest Moyunteng cloud machine list response and returned in user cloud machine list as `s5Status`.
 - [x] No database schema change is required; S5 values are read from `raw_json` after SDK sync/refresh.
+## 2026-07-09 SDK log storage update
+
+- [x] `cloud_sdk_call_log.request_body` and `response_body` are upgraded from `text` to `longtext` in `sql/cloud_myt.sql`.
+- [x] Added `sql/cloud_myt_log_longtext.sql` for existing databases.
+- [x] SDK call logging now truncates oversized request/response/error text before insert.
+- [x] SDK log insert failures no longer interrupt cloud host/container operations such as container sync.

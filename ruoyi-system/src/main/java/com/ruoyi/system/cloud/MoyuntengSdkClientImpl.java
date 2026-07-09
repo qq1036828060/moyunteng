@@ -27,6 +27,8 @@ import com.ruoyi.system.mapper.CloudSdkCallLogMapper;
 @Component
 public class MoyuntengSdkClientImpl implements MoyuntengSdkClient
 {
+    private static final int LOG_TEXT_LIMIT = 60000;
+
     private final HttpClient httpClient = HttpClient.newBuilder()
             .connectTimeout(Duration.ofSeconds(5))
             .build();
@@ -521,12 +523,33 @@ public class MoyuntengSdkClientImpl implements MoyuntengSdkClient
         log.setHostId(host == null ? null : host.getHostId());
         log.setApiPath(path);
         log.setHttpMethod(method);
-        log.setRequestBody(requestBody);
-        log.setResponseBody(responseBody);
+        log.setRequestBody(limitLogText(requestBody));
+        log.setResponseBody(limitLogText(responseBody));
         log.setResultCode(resultCode);
         log.setSuccess(success ? "1" : "0");
-        log.setErrorMsg(errorMsg);
+        log.setErrorMsg(limitLogText(errorMsg, 950));
         log.setCostMs((int) (System.currentTimeMillis() - start));
-        sdkCallLogMapper.insertCloudSdkCallLog(log);
+        try
+        {
+            sdkCallLogMapper.insertCloudSdkCallLog(log);
+        }
+        catch (Exception e)
+        {
+            // SDK call logs must not interrupt cloud machine operations.
+        }
+    }
+
+    private String limitLogText(String value)
+    {
+        return limitLogText(value, LOG_TEXT_LIMIT);
+    }
+
+    private String limitLogText(String value, int limit)
+    {
+        if (value == null || value.length() <= limit)
+        {
+            return value;
+        }
+        return value.substring(0, limit) + "...[truncated, originalLength=" + value.length() + "]";
     }
 }
