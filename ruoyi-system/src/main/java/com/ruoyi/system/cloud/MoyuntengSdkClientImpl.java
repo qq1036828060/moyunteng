@@ -4,17 +4,21 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.net.URLEncoder;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.nio.charset.StandardCharsets;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.web.multipart.MultipartFile;
 import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
 import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.common.utils.StringUtils;
+import com.ruoyi.system.domain.CloudContainer;
 import com.ruoyi.system.domain.CloudHost;
 import com.ruoyi.system.domain.CloudSdkCallLog;
 import com.ruoyi.system.mapper.CloudSdkCallLogMapper;
@@ -65,9 +69,13 @@ public class MoyuntengSdkClientImpl implements MoyuntengSdkClient
             container.setHeight(item.getInteger("doboxHeight"));
             container.setDpi(item.getInteger("doboxDpi"));
             container.setAdbPort(readHostPort(item, "5555/tcp"));
+            container.setAndroidApiPort(readHostPort(item, "9082/tcp"));
+            container.setAndroidRpaPort(readHostPort(item, "9083/tcp"));
+            container.setCameraTcpPort(readHostPort(item, "10006/tcp"));
+            container.setCameraUdpPort(readHostPort(item, "10007/udp"));
             container.setWebrtcTcpPort(readHostPort(item, "10008/tcp"));
             container.setWebrtcUdpPort(readHostPort(item, "10008/udp"));
-            fillWebrtcPortByIndex(container);
+            fillPortsByIndex(container);
             container.setRawJson(item.toJSONString());
             result.add(container);
         }
@@ -92,11 +100,269 @@ public class MoyuntengSdkClientImpl implements MoyuntengSdkClient
         command(host, "/android/restart", containerName);
     }
 
+    @Override
+    public void connectRpa(CloudHost host, String containerName)
+    {
+        try
+        {
+            command(host, "/rpa/connect", containerName);
+        }
+        catch (ServiceException e)
+        {
+            if (!isNotFound(e))
+            {
+                throw e;
+            }
+        }
+    }
+
+    @Override
+    public void openApp(CloudHost host, String containerName, String packageName)
+    {
+        try
+        {
+            JSONObject body = new JSONObject();
+            body.put("name", containerName);
+            body.put("pkg", packageName);
+            request(host, "POST", "/rpa/open_app", body.toJSONString());
+        }
+        catch (ServiceException e)
+        {
+            if (!isNotFound(e))
+            {
+                throw e;
+            }
+            androidExec(host, containerName,
+                    "monkey -p " + packageName + " -c android.intent.category.LAUNCHER 1");
+        }
+    }
+
+    @Override
+    public void shutDownApp(CloudHost host, String containerName, String packageName)
+    {
+        try
+        {
+            JSONObject body = new JSONObject();
+            body.put("name", containerName);
+            body.put("pkg", packageName);
+            request(host, "POST", "/rpa/stop_app", body.toJSONString());
+        }
+        catch (ServiceException e)
+        {
+            if (!isNotFound(e))
+            {
+                throw e;
+            }
+            androidExec(host, containerName,
+                    "monkey -p " + packageName + " -c android.intent.category.LAUNCHER 1");
+        }
+    }
+
+    @Override
+    public void click(CloudHost host, String containerName, int x, int y)
+    {
+        try
+        {
+            JSONObject body = new JSONObject();
+            body.put("name", containerName);
+            body.put("x", x);
+            body.put("y", y);
+            request(host, "POST", "/rpa/click", body.toJSONString());
+        }
+        catch (ServiceException e)
+        {
+            if (!isNotFound(e))
+            {
+                throw e;
+            }
+            androidExec(host, containerName, "input tap " + x + " " + y);
+        }
+    }
+
+    @Override
+    public Map<String, Object> shell(CloudHost host, String containerName, String command, int timeoutSeconds)
+    {
+        try
+        {
+            JSONObject body = new JSONObject();
+            body.put("name", containerName);
+            body.put("cmd", command);
+            body.put("timeout", timeoutSeconds);
+            return request(host, "POST", "/rpa/shell", body.toJSONString());
+        }
+        catch (ServiceException e)
+        {
+            if (!isNotFound(e))
+            {
+                throw e;
+            }
+            return androidExec(host, containerName, command);
+        }
+    }
+
+    @Override
+    public String uploadAndroidFile(CloudHost host, CloudContainer container, MultipartFile file, String remoteFileName)
+    {
+        String boundary = "----MytBoundary" + System.currentTimeMillis();
+        try
+        {
+            byte[] payload = buildMultipartPayload(boundary, "file", remoteFileName, file);
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(androidApiBaseUrl(host, container) + "/upload"))
+                    .timeout(Duration.ofSeconds(30))
+                    .header("Content-Type", "multipart/form-data; boundary=" + boundary)
+                    .POST(HttpRequest.BodyPublishers.ofByteArray(payload))
+                    .build();
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            if (response.statusCode() < 200 || response.statusCode() >= 300)
+            {
+                throw new ServiceException("安卓API文件上传失败: HTTP " + response.statusCode() + " "
+                        + StringUtils.defaultString(response.body()));
+            }
+            String remotePath = "/sdcard/upload/" + remoteFileName;
+            log(host, "/android-api/upload", "POST", remoteFileName, response.body(), response.statusCode(), true, null,
+                    System.currentTimeMillis());
+            return remotePath;
+        }
+        catch (Exception e)
+        {
+            if (e instanceof ServiceException)
+            {
+                throw (ServiceException) e;
+            }
+            throw new ServiceException("安卓API文件上传失败: " + e.getMessage());
+        }
+    }
+
+    @Override
+    public void setVirtualCameraSource(CloudHost host, CloudContainer container, String type, String path, Integer resolution)
+    {
+        String query = "/modifydev?cmd=4&type=" + encode(type) + "&path=" + encode(path);
+        if (resolution != null)
+        {
+            query += "&resolution=" + resolution;
+        }
+        androidApiGet(host, container, query);
+    }
+
+    @Override
+    public void startVirtualCamera(CloudHost host, CloudContainer container, String path)
+    {
+        androidApiGet(host, container, "/camera?cmd=start&path=" + encode(path));
+    }
+
     private void command(CloudHost host, String path, String containerName)
     {
         JSONObject body = new JSONObject();
         body.put("name", containerName);
         request(host, "POST", path, body.toJSONString());
+    }
+
+    private JSONObject androidExec(CloudHost host, String containerName, String command)
+    {
+        JSONObject body = new JSONObject();
+        JSONArray commands = new JSONArray();
+        commands.add("sh");
+        commands.add("-c");
+        commands.add(command);
+        body.put("name", containerName);
+        body.put("command", commands);
+        return request(host, "POST", "/android/exec", body.toJSONString());
+    }
+
+    private JSONObject androidApiGet(CloudHost host, CloudContainer container, String path)
+    {
+        long start = System.currentTimeMillis();
+        String responseBody = null;
+        Integer resultCode = null;
+        try
+        {
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(androidApiBaseUrl(host, container) + path))
+                    .timeout(Duration.ofSeconds(15))
+                    .GET()
+                    .build();
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            responseBody = response.body();
+            if (response.statusCode() < 200 || response.statusCode() >= 300)
+            {
+                throw new ServiceException("安卓API接口不可用: " + path + " HTTP " + response.statusCode()
+                        + " " + StringUtils.defaultString(responseBody));
+            }
+            JSONObject json = JSONObject.parseObject(responseBody);
+            resultCode = json.getInteger("code");
+            if (resultCode == null || resultCode != 200)
+            {
+                throw new ServiceException(firstMessage(json));
+            }
+            log(host, "/android-api" + path, "GET", null, responseBody, resultCode, true, null, start);
+            return json;
+        }
+        catch (Exception e)
+        {
+            log(host, "/android-api" + path, "GET", null, responseBody, resultCode, false, e.getMessage(), start);
+            if (e instanceof ServiceException)
+            {
+                throw (ServiceException) e;
+            }
+            throw new ServiceException("调用安卓API失败: " + e.getMessage());
+        }
+    }
+
+    private String androidApiBaseUrl(CloudHost host, CloudContainer container)
+    {
+        String ip = host.getHostIp();
+        if (StringUtils.isBlank(ip))
+        {
+            ip = container.getContainerIp();
+        }
+        Integer port = container.getAndroidApiPort();
+        if (port == null && container.getIndexNum() != null)
+        {
+            port = 30000 + (container.getIndexNum() - 1) * 100 + 1;
+        }
+        if (port == null)
+        {
+            port = 9082;
+        }
+        return "http://" + ip + ":" + port;
+    }
+
+    private byte[] buildMultipartPayload(String boundary, String fieldName, String filename, MultipartFile file) throws Exception
+    {
+        String header = "--" + boundary + "\r\n"
+                + "Content-Disposition: form-data; name=\"" + fieldName + "\"; filename=\"" + filename + "\"\r\n"
+                + "Content-Type: application/octet-stream\r\n\r\n";
+        String footer = "\r\n--" + boundary + "--\r\n";
+        byte[] headerBytes = header.getBytes(StandardCharsets.UTF_8);
+        byte[] fileBytes = file.getBytes();
+        byte[] footerBytes = footer.getBytes(StandardCharsets.UTF_8);
+        byte[] payload = new byte[headerBytes.length + fileBytes.length + footerBytes.length];
+        System.arraycopy(headerBytes, 0, payload, 0, headerBytes.length);
+        System.arraycopy(fileBytes, 0, payload, headerBytes.length, fileBytes.length);
+        System.arraycopy(footerBytes, 0, payload, headerBytes.length + fileBytes.length, footerBytes.length);
+        return payload;
+    }
+
+    private String firstMessage(JSONObject json)
+    {
+        String message = json.getString("msg");
+        if (StringUtils.isNotBlank(message))
+        {
+            return message;
+        }
+        message = json.getString("reason");
+        if (StringUtils.isNotBlank(message))
+        {
+            return message;
+        }
+        message = json.getString("error");
+        return StringUtils.isBlank(message) ? json.toJSONString() : message;
+    }
+
+    private String encode(String value)
+    {
+        return URLEncoder.encode(StringUtils.defaultString(value), StandardCharsets.UTF_8);
     }
 
     private JSONObject request(CloudHost host, String method, String path, String body)
@@ -120,6 +386,11 @@ public class MoyuntengSdkClientImpl implements MoyuntengSdkClient
             }
             HttpResponse<String> response = httpClient.send(builder.build(), HttpResponse.BodyHandlers.ofString());
             responseBody = response.body();
+            if (response.statusCode() < 200 || response.statusCode() >= 300)
+            {
+                throw new ServiceException("魔云腾SDK接口不可用: " + path + " HTTP " + response.statusCode()
+                        + " " + StringUtils.defaultString(responseBody));
+            }
             JSONObject json = JSONObject.parseObject(responseBody);
             resultCode = json.getInteger("code");
             if (resultCode == null || resultCode != 0)
@@ -139,6 +410,12 @@ public class MoyuntengSdkClientImpl implements MoyuntengSdkClient
             }
             throw new ServiceException("调用魔云腾SDK失败: " + e.getMessage());
         }
+    }
+
+    private boolean isNotFound(ServiceException e)
+    {
+        String message = e.getMessage();
+        return message != null && (message.contains("HTTP 404") || message.contains("Not Found"));
     }
 
     private String baseUrl(CloudHost host)
@@ -166,13 +443,33 @@ public class MoyuntengSdkClientImpl implements MoyuntengSdkClient
         return bindings.getJSONObject(0).getInteger("HostPort");
     }
 
-    private void fillWebrtcPortByIndex(MytAndroidContainer container)
+    private void fillPortsByIndex(MytAndroidContainer container)
     {
         if (container.getIndexNum() == null)
         {
             return;
         }
         int base = 30000 + (container.getIndexNum() - 1) * 100;
+        if (container.getAdbPort() == null)
+        {
+            container.setAdbPort(base);
+        }
+        if (container.getAndroidApiPort() == null)
+        {
+            container.setAndroidApiPort(base + 1);
+        }
+        if (container.getAndroidRpaPort() == null)
+        {
+            container.setAndroidRpaPort(base + 2);
+        }
+        if (container.getCameraTcpPort() == null)
+        {
+            container.setCameraTcpPort(base + 5);
+        }
+        if (container.getCameraUdpPort() == null)
+        {
+            container.setCameraUdpPort(base + 6);
+        }
         if (container.getWebrtcTcpPort() == null)
         {
             container.setWebrtcTcpPort(base + 7);
@@ -199,4 +496,3 @@ public class MoyuntengSdkClientImpl implements MoyuntengSdkClient
         sdkCallLogMapper.insertCloudSdkCallLog(log);
     }
 }
-

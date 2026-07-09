@@ -16,6 +16,10 @@ public class MytAndroidContainer
     private Integer webrtcTcpPort;
     private Integer webrtcUdpPort;
     private Integer adbPort;
+    private Integer androidApiPort;
+    private Integer androidRpaPort;
+    private Integer cameraTcpPort;
+    private Integer cameraUdpPort;
     private String rawJson;
 
     public String getId() { return id; }
@@ -46,7 +50,14 @@ public class MytAndroidContainer
     public void setWebrtcUdpPort(Integer webrtcUdpPort) { this.webrtcUdpPort = webrtcUdpPort; }
     public Integer getAdbPort() { return adbPort; }
     public void setAdbPort(Integer adbPort) { this.adbPort = adbPort; }
+    public Integer getAndroidApiPort() { return androidApiPort; }
+    public void setAndroidApiPort(Integer androidApiPort) { this.androidApiPort = androidApiPort; }
+    public Integer getAndroidRpaPort() { return androidRpaPort; }
+    public void setAndroidRpaPort(Integer androidRpaPort) { this.androidRpaPort = androidRpaPort; }
+    public Integer getCameraTcpPort() { return cameraTcpPort; }
+    public void setCameraTcpPort(Integer cameraTcpPort) { this.cameraTcpPort = cameraTcpPort; }
+    public Integer getCameraUdpPort() { return cameraUdpPort; }
+    public void setCameraUdpPort(Integer cameraUdpPort) { this.cameraUdpPort = cameraUdpPort; }
     public String getRawJson() { return rawJson; }
     public void setRawJson(String rawJson) { this.rawJson = rawJson; }
 }
-

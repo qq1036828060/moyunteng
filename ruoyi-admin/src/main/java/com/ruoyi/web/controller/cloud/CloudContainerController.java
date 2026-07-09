@@ -6,6 +6,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import com.ruoyi.common.annotation.Log;
@@ -14,6 +15,7 @@ import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.common.core.page.TableDataInfo;
 import com.ruoyi.common.enums.BusinessType;
 import com.ruoyi.system.domain.CloudContainer;
+import com.ruoyi.system.domain.CloudContainerAssignRequest;
 import com.ruoyi.system.service.ICloudContainerService;
 
 @RestController
@@ -28,7 +30,7 @@ public class CloudContainerController extends BaseController
     public TableDataInfo list(CloudContainer container)
     {
         startPage();
-        List<CloudContainer> list = cloudContainerService.selectCloudContainerList(container);
+        List<CloudContainer> list = cloudContainerService.selectCloudContainerSlotList(container);
         return getDataTable(list);
     }
 
@@ -37,6 +39,30 @@ public class CloudContainerController extends BaseController
     public AjaxResult getInfo(@PathVariable Long containerId)
     {
         return success(cloudContainerService.selectCloudContainerById(containerId));
+    }
+
+    @PreAuthorize("@ss.hasPermi('cloud:container:assign')")
+    @Log(title = "云机容器分配", businessType = BusinessType.UPDATE)
+    @PostMapping("/assign")
+    public AjaxResult assign(@RequestBody CloudContainerAssignRequest request)
+    {
+        return toAjax(cloudContainerService.assignContainerByHostIndex(request, getUsername()));
+    }
+
+    @PreAuthorize("@ss.hasPermi('cloud:container:assign')")
+    @Log(title = "云机容器取消分配", businessType = BusinessType.UPDATE)
+    @PostMapping("/{containerId}/unassign")
+    public AjaxResult unassign(@PathVariable Long containerId)
+    {
+        return toAjax(cloudContainerService.unassignContainer(containerId));
+    }
+
+    @PreAuthorize("@ss.hasPermi('cloud:container:assign')")
+    @Log(title = "云机实例位取消分配", businessType = BusinessType.UPDATE)
+    @PostMapping("/unassign-slot")
+    public AjaxResult unassignSlot(@RequestBody CloudContainerAssignRequest request)
+    {
+        return toAjax(cloudContainerService.unassignContainerByHostIndex(request));
     }
 
     @PreAuthorize("@ss.hasPermi('cloud:container:start')")
@@ -74,4 +100,3 @@ public class CloudContainerController extends BaseController
         return toAjax(cloudContainerService.releaseContainer(containerId));
     }
 }
-

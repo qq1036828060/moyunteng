@@ -25,8 +25,19 @@ public class CloudContainer extends BaseEntity
     private Integer webrtcTcpPort;
     private Integer webrtcUdpPort;
     private Integer adbPort;
+    private Integer androidApiPort;
+    private Integer androidRpaPort;
+    private Integer cameraTcpPort;
+    private Integer cameraUdpPort;
+    private String cloudMachineType;
     private Long currentTaskId;
     private Long boundAccountId;
+    private String boundAccountNo;
+    private Long assignedUserId;
+    private String assignedUserName;
+    private Integer containerCount;
+    private Integer runningCount;
+    private Integer assignedCount;
     private String lockOwner;
     private Date lockExpireTime;
     private Date lastHeartbeatTime;
@@ -69,10 +80,32 @@ public class CloudContainer extends BaseEntity
     public void setWebrtcUdpPort(Integer webrtcUdpPort) { this.webrtcUdpPort = webrtcUdpPort; }
     public Integer getAdbPort() { return adbPort; }
     public void setAdbPort(Integer adbPort) { this.adbPort = adbPort; }
+    public Integer getAndroidApiPort() { return androidApiPort; }
+    public void setAndroidApiPort(Integer androidApiPort) { this.androidApiPort = androidApiPort; }
+    public Integer getAndroidRpaPort() { return androidRpaPort; }
+    public void setAndroidRpaPort(Integer androidRpaPort) { this.androidRpaPort = androidRpaPort; }
+    public Integer getCameraTcpPort() { return cameraTcpPort; }
+    public void setCameraTcpPort(Integer cameraTcpPort) { this.cameraTcpPort = cameraTcpPort; }
+    public Integer getCameraUdpPort() { return cameraUdpPort; }
+    public void setCameraUdpPort(Integer cameraUdpPort) { this.cameraUdpPort = cameraUdpPort; }
+    public String getCloudMachineType() { return cloudMachineType; }
+    public void setCloudMachineType(String cloudMachineType) { this.cloudMachineType = cloudMachineType; }
     public Long getCurrentTaskId() { return currentTaskId; }
     public void setCurrentTaskId(Long currentTaskId) { this.currentTaskId = currentTaskId; }
     public Long getBoundAccountId() { return boundAccountId; }
     public void setBoundAccountId(Long boundAccountId) { this.boundAccountId = boundAccountId; }
+    public String getBoundAccountNo() { return boundAccountNo; }
+    public void setBoundAccountNo(String boundAccountNo) { this.boundAccountNo = boundAccountNo; }
+    public Long getAssignedUserId() { return assignedUserId; }
+    public void setAssignedUserId(Long assignedUserId) { this.assignedUserId = assignedUserId; }
+    public String getAssignedUserName() { return assignedUserName; }
+    public void setAssignedUserName(String assignedUserName) { this.assignedUserName = assignedUserName; }
+    public Integer getContainerCount() { return containerCount; }
+    public void setContainerCount(Integer containerCount) { this.containerCount = containerCount; }
+    public Integer getRunningCount() { return runningCount; }
+    public void setRunningCount(Integer runningCount) { this.runningCount = runningCount; }
+    public Integer getAssignedCount() { return assignedCount; }
+    public void setAssignedCount(Integer assignedCount) { this.assignedCount = assignedCount; }
     public String getLockOwner() { return lockOwner; }
     public void setLockOwner(String lockOwner) { this.lockOwner = lockOwner; }
     public Date getLockExpireTime() { return lockExpireTime; }
@@ -84,4 +117,3 @@ public class CloudContainer extends BaseEntity
     public String getDelFlag() { return delFlag; }
     public void setDelFlag(String delFlag) { this.delFlag = delFlag; }
 }
-

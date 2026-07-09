@@ -1,8 +1,11 @@
 package com.ruoyi.system.service.impl;
 
 import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.ruoyi.common.exception.ServiceException;
@@ -89,6 +92,7 @@ public class CloudHostServiceImpl implements ICloudHostService
     {
         CloudHost host = requireHost(hostId);
         List<MytAndroidContainer> containers = moyuntengSdkClient.listAndroid(host);
+        Map<Integer, CloudContainer> slotAssignments = selectSlotAssignments(host.getHostId());
         int count = 0;
         for (MytAndroidContainer item : containers)
         {
@@ -112,6 +116,7 @@ public class CloudHostServiceImpl implements ICloudHostService
             container.setAdbPort(item.getAdbPort());
             container.setRawJson(item.getRawJson());
             container.setCreateBy(operator);
+            inheritSlotAssignment(container, slotAssignments);
             cloudContainerMapper.upsertCloudContainer(container);
             count++;
         }
@@ -121,6 +126,49 @@ public class CloudHostServiceImpl implements ICloudHostService
         host.setUpdateBy(operator);
         cloudHostMapper.updateCloudHost(host);
         return count;
+    }
+
+    private Map<Integer, CloudContainer> selectSlotAssignments(Long hostId)
+    {
+        CloudContainer query = new CloudContainer();
+        query.setHostId(hostId);
+        List<CloudContainer> localContainers = cloudContainerMapper.selectCloudContainerList(query);
+        Map<Integer, CloudContainer> assignments = new HashMap<>();
+        Set<Integer> conflictSlots = new HashSet<>();
+        for (CloudContainer local : localContainers)
+        {
+            if (local.getIndexNum() == null || local.getAssignedUserId() == null || conflictSlots.contains(local.getIndexNum()))
+            {
+                continue;
+            }
+            CloudContainer current = assignments.get(local.getIndexNum());
+            if (current == null)
+            {
+                assignments.put(local.getIndexNum(), local);
+                continue;
+            }
+            if (!current.getAssignedUserId().equals(local.getAssignedUserId()))
+            {
+                assignments.remove(local.getIndexNum());
+                conflictSlots.add(local.getIndexNum());
+            }
+        }
+        return assignments;
+    }
+
+    private void inheritSlotAssignment(CloudContainer container, Map<Integer, CloudContainer> slotAssignments)
+    {
+        if (container.getIndexNum() == null)
+        {
+            return;
+        }
+        CloudContainer assignment = slotAssignments.get(container.getIndexNum());
+        if (assignment == null)
+        {
+            return;
+        }
+        container.setAssignedUserId(assignment.getAssignedUserId());
+        container.setAssignedUserName(assignment.getAssignedUserName());
     }
 
     private CloudHost requireHost(Long hostId)
@@ -145,4 +193,3 @@ public class CloudHostServiceImpl implements ICloudHostService
         }
     }
 }
-
