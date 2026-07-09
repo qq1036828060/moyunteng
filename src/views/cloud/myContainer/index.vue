@@ -53,7 +53,14 @@
         </template>
       </el-table-column>
       <el-table-column label="云机名称" align="center" prop="containerName" min-width="150" show-overflow-tooltip />
-      <el-table-column label="绑定账号" align="center" prop="boundAccountNo" min-width="150" show-overflow-tooltip />
+      <el-table-column label="绑定账号" align="center" prop="boundAccountNo" min-width="130" show-overflow-tooltip />
+      <el-table-column label="S5代理" align="center" min-width="170" show-overflow-tooltip>
+        <template #default="scope">
+          <el-tag :type="isProxyEnabled(scope.row) ? 'success' : 'info'">
+            {{ scope.row.s5Status || '未开启' }}
+          </el-tag>
+        </template>
+      </el-table-column>
       <el-table-column label="运行状态" align="center" prop="containerStatus" width="110">
         <template #default="scope">
           <el-tag :type="scope.row.containerStatus === 'running' ? 'success' : 'info'">
@@ -66,54 +73,29 @@
         <template #default="scope">{{ scope.row.webrtcTcpPort || '-' }} / {{ scope.row.webrtcUdpPort || '-' }}</template>
       </el-table-column>
       <el-table-column label="安卓API端口" align="center" prop="androidApiPort" width="110" />
-      <el-table-column label="摄像头端口" align="center" width="140">
-        <template #default="scope">{{ scope.row.cameraTcpPort || '-' }} / {{ scope.row.cameraUdpPort || '-' }}</template>
-      </el-table-column>
-      <el-table-column label="ADB端口" align="center" prop="adbPort" width="90" />
-      <el-table-column label="操作" align="center" width="380" fixed="right">
+      <el-table-column label="操作" align="center" width="470" fixed="right">
         <template #default="scope">
-          <el-button
-            link
-            type="primary"
-            icon="Connection"
-            @click="handleBind(scope.row)"
-            v-hasPermi="['cloud:mycontainer:bind']"
-          >绑定账号</el-button>
-          <el-button
-            link
-            type="primary"
-            icon="Monitor"
-            @click="handleControl(scope.row)"
-            v-hasPermi="['cloud:mycontainer:operate']"
-          >进入控制</el-button>
-          <el-button
-            link
-            type="primary"
-            icon="Camera"
-            @click="handleScan(scope.row)"
-            v-hasPermi="['cloud:mycontainer:operate']"
-          >扫码</el-button>
-          <el-button
-            link
-            type="primary"
-            icon="VideoPlay"
-            @click="handleStart(scope.row)"
-            v-hasPermi="['cloud:mycontainer:operate']"
-          >启动</el-button>
-          <el-button
-            link
-            type="primary"
-            icon="SwitchButton"
-            @click="handleStop(scope.row)"
-            v-hasPermi="['cloud:mycontainer:operate']"
-          >停止</el-button>
-          <el-button
-            link
-            type="primary"
-            icon="Refresh"
-            @click="handleRestart(scope.row)"
-            v-hasPermi="['cloud:mycontainer:operate']"
-          >重启</el-button>
+          <el-button link type="primary" icon="Connection" @click="handleBind(scope.row)" v-hasPermi="['cloud:mycontainer:bind']">
+            绑定账号
+          </el-button>
+          <el-button link type="primary" icon="Link" @click="handleProxy(scope.row)" v-hasPermi="['cloud:mycontainer:operate']">
+            代理
+          </el-button>
+          <el-button link type="primary" icon="Monitor" @click="handleControl(scope.row)" v-hasPermi="['cloud:mycontainer:operate']">
+            控制
+          </el-button>
+          <el-button link type="primary" icon="Camera" @click="handleScan(scope.row)" v-hasPermi="['cloud:mycontainer:operate']">
+            扫码
+          </el-button>
+          <el-button link type="primary" icon="VideoPlay" @click="handleStart(scope.row)" v-hasPermi="['cloud:mycontainer:operate']">
+            启动
+          </el-button>
+          <el-button link type="primary" icon="SwitchButton" @click="handleStop(scope.row)" v-hasPermi="['cloud:mycontainer:operate']">
+            停止
+          </el-button>
+          <el-button link type="primary" icon="Refresh" @click="handleRestart(scope.row)" v-hasPermi="['cloud:mycontainer:operate']">
+            重启
+          </el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -139,6 +121,43 @@
         <div class="dialog-footer">
           <el-button type="primary" @click="submitBind">确定</el-button>
           <el-button @click="bindOpen = false">取消</el-button>
+        </div>
+      </template>
+    </el-dialog>
+
+    <el-dialog title="S5代理设置" v-model="proxyOpen" width="520px" append-to-body>
+      <el-form ref="proxyRef" :model="proxyForm" label-width="100px">
+        <el-form-item label="云机">
+          <span>{{ proxyForm.containerName }}</span>
+        </el-form-item>
+        <el-form-item label="代理类型">
+          <el-select v-model="proxyForm.s5Type" style="width: 100%">
+            <el-option label="关闭代理" value="0" />
+            <el-option label="tun2socks" value="1" />
+            <el-option label="tun2proxy" value="2" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="代理IP">
+          <el-input v-model="proxyForm.s5Ip" placeholder="请输入S5代理IP" :disabled="proxyForm.s5Type === '0'" />
+        </el-form-item>
+        <el-form-item label="代理端口">
+          <el-input v-model="proxyForm.s5Port" placeholder="请输入S5代理端口" :disabled="proxyForm.s5Type === '0'" />
+        </el-form-item>
+        <el-form-item label="用户名">
+          <el-input v-model="proxyForm.s5User" placeholder="可选" :disabled="proxyForm.s5Type === '0'" />
+        </el-form-item>
+        <el-form-item label="密码">
+          <el-input v-model="proxyForm.s5Password" type="password" show-password placeholder="可选" :disabled="proxyForm.s5Type === '0'" />
+        </el-form-item>
+        <el-form-item label="当前状态">
+          <el-tag :type="isProxyEnabled(proxyForm) ? 'success' : 'info'">{{ proxyForm.s5Status || '未开启' }}</el-tag>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button :loading="proxyLoading" @click="refreshProxyStatus">查询状态</el-button>
+          <el-button type="primary" :loading="proxyLoading" @click="submitProxy">保存</el-button>
+          <el-button @click="proxyOpen = false">取消</el-button>
         </div>
       </template>
     </el-dialog>
@@ -184,6 +203,8 @@ import {
   stopMyContainer,
   restartMyContainer,
   bindMyContainerAccount,
+  setMyContainerS5Proxy,
+  getMyContainerS5Proxy,
   scanMyContainerQq,
 } from '@/api/cloud/myContainer'
 
@@ -195,13 +216,13 @@ const containerList = ref([])
 const total = ref(0)
 const summary = ref({})
 const bindOpen = ref(false)
+const proxyOpen = ref(false)
+const proxyLoading = ref(false)
 const scanOpen = ref(false)
 const scanLoading = ref(false)
 const scanFile = ref(null)
 const scanFileList = ref([])
 const scanUploadUrl = 'https://h5.61xm.cn/prod-api/upload/image'
-
-console.log('CloudMyContainer setup')
 
 const data = reactive({
   queryParams: {
@@ -215,20 +236,34 @@ const data = reactive({
     containerName: undefined,
     boundAccountNo: undefined,
   },
+  proxyForm: {
+    containerId: undefined,
+    containerName: undefined,
+    s5Ip: undefined,
+    s5Port: undefined,
+    s5User: undefined,
+    s5Password: undefined,
+    s5Type: '1',
+    s5Status: undefined,
+  },
   scanForm: {
     containerId: undefined,
     containerName: undefined,
   },
 })
 
-const { queryParams, bindForm, scanForm } = toRefs(data)
+const { queryParams, bindForm, proxyForm, scanForm } = toRefs(data)
+
+function isProxyEnabled(row) {
+  return row && row.s5Type !== '0' && !!row.s5Ip
+}
 
 function getList() {
   loading.value = true
   listMyContainer(queryParams.value)
     .then((response) => {
-      containerList.value = response.rows
-      total.value = response.total
+      containerList.value = response.rows || []
+      total.value = response.total || 0
       loading.value = false
     })
     .catch(() => {
@@ -268,7 +303,7 @@ function handleBind(row) {
 
 function submitBind() {
   bindMyContainerAccount(bindForm.value.containerId, bindForm.value.boundAccountNo).then(() => {
-    proxy.$modal.msgSuccess('绑定成功，正在进入控制并打开 QQ')
+    proxy.$modal.msgSuccess('绑定成功，正在进入控制并打开QQ')
     bindOpen.value = false
     refreshAll()
     router.push({
@@ -276,6 +311,56 @@ function submitBind() {
       query: { autoOpenQq: '1' },
     })
   })
+}
+
+function handleProxy(row) {
+  proxyForm.value = {
+    containerId: row.containerId,
+    containerName: row.containerName,
+    s5Ip: row.s5Ip,
+    s5Port: row.s5Port,
+    s5User: row.s5User,
+    s5Password: row.s5Password,
+    s5Type: row.s5Type || '1',
+    s5Status: row.s5Status,
+  }
+  proxyOpen.value = true
+}
+
+function submitProxy() {
+  if (proxyForm.value.s5Type !== '0' && (!proxyForm.value.s5Ip || !proxyForm.value.s5Port)) {
+    proxy.$modal.msgError('请填写S5代理IP和端口')
+    return
+  }
+  proxyLoading.value = true
+  setMyContainerS5Proxy(proxyForm.value.containerId, {
+    s5Ip: proxyForm.value.s5Ip,
+    s5Port: proxyForm.value.s5Port,
+    s5User: proxyForm.value.s5User,
+    s5Password: proxyForm.value.s5Password,
+    s5Type: proxyForm.value.s5Type,
+  })
+    .then((response) => {
+      Object.assign(proxyForm.value, response.data || {})
+      proxy.$modal.msgSuccess('S5代理已设置')
+      refreshAll()
+    })
+    .finally(() => {
+      proxyLoading.value = false
+    })
+}
+
+function refreshProxyStatus() {
+  proxyLoading.value = true
+  getMyContainerS5Proxy(proxyForm.value.containerId)
+    .then((response) => {
+      Object.assign(proxyForm.value, response.data || {})
+      proxy.$modal.msgSuccess('代理状态已刷新')
+      refreshAll()
+    })
+    .finally(() => {
+      proxyLoading.value = false
+    })
 }
 
 function handleControl(row) {
@@ -328,9 +413,7 @@ function submitScan() {
   }
   scanLoading.value = true
   uploadScanImage(scanFile.value)
-    .then((uploadData) => {
-      return scanMyContainerQq(scanForm.value.containerId, scanFile.value, uploadData.filePath)
-    })
+    .then((uploadData) => scanMyContainerQq(scanForm.value.containerId, scanFile.value, uploadData.filePath))
     .then((response) => {
       const data = response.data || {}
       proxy.$modal.msgSuccess(data.qrText ? '已解析二维码并下发扫码操作' : '已下发扫码操作')

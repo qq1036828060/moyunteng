@@ -91,3 +91,9 @@ yarn dev
 - [x] 扫码操作升级为上传二维码图片到安卓实例并设置虚拟摄像头图片源，再进入 QQ 扫一扫。
 
 后端默认地址在 `.env.development` 中配置。
+## 2026-07-09 S5 proxy update
+
+- [x] The user cloud machine list now shows S5 proxy status.
+- [x] Added a user-side S5 proxy dialog for IP, port, username, password, and proxy type.
+- [x] Users can save S5 proxy settings or set proxy type to `0` to disable proxy.
+- [x] Users can refresh S5 proxy status after setting; the list updates from the backend status query.

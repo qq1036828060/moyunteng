@@ -51,6 +51,21 @@ export function bindMyContainerAccount(containerId, boundAccountNo) {
   })
 }
 
+export function setMyContainerS5Proxy(containerId, data) {
+  return request({
+    url: '/cloud/my/container/' + containerId + '/proxy/s5',
+    method: 'put',
+    data
+  })
+}
+
+export function getMyContainerS5Proxy(containerId) {
+  return request({
+    url: '/cloud/my/container/' + containerId + '/proxy/s5',
+    method: 'get'
+  })
+}
+
 export function openMyContainerQq(containerId) {
   return request({
     url: '/cloud/my/container/' + containerId + '/qq/open',
