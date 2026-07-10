@@ -35,6 +35,9 @@ import com.ruoyi.system.mapper.CloudHostMapper;
 import com.ruoyi.system.service.ICloudContainerService;
 import com.ruoyi.system.service.ISysUserService;
 
+/**
+ * 云机容器资源池和用户端云机操作服务实现。
+ */
 @Service
 public class CloudContainerServiceImpl implements ICloudContainerService
 {
@@ -52,6 +55,7 @@ public class CloudContainerServiceImpl implements ICloudContainerService
     @Autowired
     private ISysUserService userService;
 
+    /** 查询容器明细列表，并补齐展示字段。 */
     @Override
     public List<CloudContainer> selectCloudContainerList(CloudContainer container)
     {
@@ -60,6 +64,7 @@ public class CloudContainerServiceImpl implements ICloudContainerService
         return list;
     }
 
+    /** 查询按实例位聚合的资源池列表，并补齐展示字段。 */
     @Override
     public List<CloudContainer> selectCloudContainerSlotList(CloudContainer container)
     {
@@ -68,12 +73,14 @@ public class CloudContainerServiceImpl implements ICloudContainerService
         return list;
     }
 
+    /** 查询单个容器详情，并补齐端口、类型、代理状态等派生字段。 */
     @Override
     public CloudContainer selectCloudContainerById(Long containerId)
     {
         return enrichContainer(cloudContainerMapper.selectCloudContainerById(containerId));
     }
 
+    /** 查询当前用户被分配到的云机列表。 */
     @Override
     public List<CloudContainer> selectMyCloudContainerList(Long userId, CloudContainer container)
     {
@@ -83,6 +90,7 @@ public class CloudContainerServiceImpl implements ICloudContainerService
         return list;
     }
 
+    /** 汇总当前用户云机数量、运行中数量和空闲数量。 */
     @Override
     public Map<String, Object> selectMyCloudContainerSummary(Long userId)
     {
@@ -110,6 +118,7 @@ public class CloudContainerServiceImpl implements ICloudContainerService
         return summary;
     }
 
+    /** 进入控制前准备云机状态，并生成 WebRTC 播放地址。 */
     @Override
     public Map<String, Object> selectMyContainerWebrtcInfo(Long userId, Long containerId)
     {
@@ -164,6 +173,7 @@ public class CloudContainerServiceImpl implements ICloudContainerService
         return info;
     }
 
+    /** 保证同一主机同一实例位只有目标云机处于运行状态，避免控制串流冲突。 */
     private String prepareContainerForControl(CloudHost host, CloudContainer target)
     {
         if (target.getIndexNum() == null)
@@ -230,6 +240,7 @@ public class CloudContainerServiceImpl implements ICloudContainerService
         return "当前实例位暂无运行云机，已启动当前云机";
     }
 
+    /** 查询目标云机所在实例位下的全部容器。 */
     private List<CloudContainer> selectSlotContainers(CloudContainer container)
     {
         CloudContainer query = new CloudContainer();
@@ -238,6 +249,7 @@ public class CloudContainerServiceImpl implements ICloudContainerService
         return cloudContainerMapper.selectCloudContainerByHostIndex(query);
     }
 
+    /** 按主机实例位批量分配云机给指定用户。 */
     @Override
     public int assignContainerByHostIndex(CloudContainerAssignRequest request, String operator)
     {
@@ -282,6 +294,7 @@ public class CloudContainerServiceImpl implements ICloudContainerService
         return count;
     }
 
+    /** 取消单个容器的用户分配关系。 */
     @Override
     public int unassignContainer(Long containerId)
     {
@@ -289,6 +302,7 @@ public class CloudContainerServiceImpl implements ICloudContainerService
         return cloudContainerMapper.unassignCloudContainer(containerId);
     }
 
+    /** 按主机实例位批量取消分配。 */
     @Override
     public int unassignContainerByHostIndex(CloudContainerAssignRequest request)
     {
@@ -315,6 +329,7 @@ public class CloudContainerServiceImpl implements ICloudContainerService
         return count;
     }
 
+    /** 用户端绑定业务账号到自己的云机。 */
     @Override
     public int bindMyContainerAccount(Long userId, Long containerId, String boundAccountNo)
     {
@@ -326,6 +341,7 @@ public class CloudContainerServiceImpl implements ICloudContainerService
         return cloudContainerMapper.bindCloudContainerAccount(update);
     }
 
+    /** 准备用户云机控制环境并打开 QQ。 */
     @Override
     public Map<String, Object> openMyContainerQq(Long userId, Long containerId)
     {
@@ -343,6 +359,7 @@ public class CloudContainerServiceImpl implements ICloudContainerService
         return result;
     }
 
+    /** 上传二维码、设置虚拟摄像头并触发 QQ 扫一扫流程。 */
     @Override
     public Map<String, Object> scanMyContainerQq(Long userId, Long containerId, MultipartFile file, String filePath) throws Exception
     {
@@ -383,6 +400,7 @@ public class CloudContainerServiceImpl implements ICloudContainerService
         return result;
     }
 
+    /** 设置或关闭当前用户云机的 S5 代理，并保存查询后的代理状态。 */
     @Override
     public CloudContainer setMyContainerS5Proxy(Long userId, Long containerId, CloudContainerProxyRequest request)
     {
@@ -398,6 +416,7 @@ public class CloudContainerServiceImpl implements ICloudContainerService
         return requireOwnedContainer(userId, containerId);
     }
 
+    /** 查询当前用户云机的 S5 代理状态，并回写到 rawJson。 */
     @Override
     public CloudContainer getMyContainerS5ProxyStatus(Long userId, Long containerId)
     {
@@ -408,6 +427,7 @@ public class CloudContainerServiceImpl implements ICloudContainerService
         return requireOwnedContainer(userId, containerId);
     }
 
+    /** 将 S5 代理配置和 Android API 查询结果合并写入容器 rawJson。 */
     private void updateLocalS5ProxyStatus(CloudContainer container, CloudContainerProxyRequest request, Map<String, Object> proxyStatus)
     {
         JSONObject raw = new JSONObject();
@@ -448,6 +468,7 @@ public class CloudContainerServiceImpl implements ICloudContainerService
         cloudContainerMapper.updateCloudContainer(update);
     }
 
+    /** 校验并规整 S5 代理请求参数。 */
     private void normalizeS5ProxyRequest(CloudContainerProxyRequest request)
     {
         request.setS5Type(StringUtils.isBlank(request.getS5Type()) ? "1" : request.getS5Type().trim());
@@ -473,6 +494,7 @@ public class CloudContainerServiceImpl implements ICloudContainerService
         }
     }
 
+    /** 建立 RPA 连接并打开 QQ 应用。 */
     private void openQq(CloudHost host, CloudContainer container)
     {
         moyuntengSdkClient.connectRpa(host, container.getContainerName());
@@ -480,6 +502,7 @@ public class CloudContainerServiceImpl implements ICloudContainerService
         moyuntengSdkClient.openApp(host, container.getContainerName(), QQ_PACKAGE_NAME);
     }
 
+    /** 按屏幕分辨率比例点击 QQ 右上角加号和扫一扫入口。 */
     private void clickQqScanEntry(CloudHost host, CloudContainer container)
     {
         int width = valueOrDefault(container.getWidth(), 720);
@@ -495,6 +518,7 @@ public class CloudContainerServiceImpl implements ICloudContainerService
 //        moyuntengSdkClient.shutDownApp(host, container.getContainerName(), QQ_PACKAGE_NAME);
     }
 
+    /** 生成覆盖式上传到 Android 实例的二维码文件名。 */
     private String buildRemoteQrFileName(CloudContainer container, MultipartFile file)
     {
         String extension = FilenameUtils.getExtension(file.getOriginalFilename());
@@ -505,6 +529,7 @@ public class CloudContainerServiceImpl implements ICloudContainerService
         return "qq_scan_" + container.getContainerId() + "." + extension.toLowerCase();
     }
 
+    /** 尝试解析上传图片中的二维码文本，解析失败不阻断扫码流程。 */
     private String decodeQrText(MultipartFile file)
     {
         try (InputStream inputStream = file.getInputStream())
@@ -524,6 +549,7 @@ public class CloudContainerServiceImpl implements ICloudContainerService
         }
     }
 
+    /** 尝试直接打开二维码文本链接，保留为旧版本扫码能力的补充路径。 */
     private void openQrTextIfPossible(CloudHost host, CloudContainer container, String qrText)
     {
         if (StringUtils.isBlank(qrText))
@@ -541,21 +567,25 @@ public class CloudContainerServiceImpl implements ICloudContainerService
         }
     }
 
+    /** 对 shell 命令参数做单引号转义。 */
     private String shellQuote(String value)
     {
         return "'" + value.replace("'", "'\"'\"'") + "'";
     }
 
+    /** 返回有效正整数，否则返回默认值。 */
     private int valueOrDefault(Integer value, int defaultValue)
     {
         return value == null || value <= 0 ? defaultValue : value;
     }
 
+    /** 按屏幕尺寸比例换算点击坐标。 */
     private int scale(int value, double ratio)
     {
         return Math.max(1, (int) Math.round(value * ratio));
     }
 
+    /** RPA 步骤之间等待，保证应用界面完成跳转。 */
     private void sleepRpaStep(long millis)
     {
         try
@@ -569,48 +599,56 @@ public class CloudContainerServiceImpl implements ICloudContainerService
         }
     }
 
+    /** 主端启动容器。 */
     @Override
     public void startContainer(Long containerId)
     {
         startContainer(requireContainer(containerId));
     }
 
+    /** 用户端启动自己的云机。 */
     @Override
     public void startMyContainer(Long userId, Long containerId)
     {
         startContainer(requireOwnedContainer(userId, containerId));
     }
 
+    /** 主端停止容器。 */
     @Override
     public void stopContainer(Long containerId)
     {
         stopContainer(requireContainer(containerId));
     }
 
+    /** 用户端停止自己的云机。 */
     @Override
     public void stopMyContainer(Long userId, Long containerId)
     {
         stopContainer(requireOwnedContainer(userId, containerId));
     }
 
+    /** 主端重启容器。 */
     @Override
     public void restartContainer(Long containerId)
     {
         restartContainer(requireContainer(containerId));
     }
 
+    /** 用户端重启自己的云机。 */
     @Override
     public void restartMyContainer(Long userId, Long containerId)
     {
         restartContainer(requireOwnedContainer(userId, containerId));
     }
 
+    /** 释放容器分配、账号绑定和调度状态。 */
     @Override
     public int releaseContainer(Long containerId)
     {
         return cloudContainerMapper.releaseCloudContainer(containerId);
     }
 
+    /** 查询容器，不存在时抛出业务异常。 */
     private CloudContainer requireContainer(Long containerId)
     {
         CloudContainer container = cloudContainerMapper.selectCloudContainerById(containerId);
@@ -621,6 +659,7 @@ public class CloudContainerServiceImpl implements ICloudContainerService
         return enrichContainer(container);
     }
 
+    /** 查询并校验容器是否归属当前用户。 */
     private CloudContainer requireOwnedContainer(Long userId, Long containerId)
     {
         CloudContainer container = requireContainer(containerId);
@@ -631,6 +670,7 @@ public class CloudContainerServiceImpl implements ICloudContainerService
         return enrichContainer(container);
     }
 
+    /** 批量补齐容器展示字段。 */
     private void enrichContainers(List<CloudContainer> containers)
     {
         if (containers == null)
@@ -643,6 +683,7 @@ public class CloudContainerServiceImpl implements ICloudContainerService
         }
     }
 
+    /** 补齐云机类型、S5 状态和实例位推导端口等展示/控制字段。 */
     private CloudContainer enrichContainer(CloudContainer container)
     {
         if (container == null)
@@ -666,6 +707,7 @@ public class CloudContainerServiceImpl implements ICloudContainerService
         return container;
     }
 
+    /** 从 rawJson 读取 S5 代理配置和状态并写入展示字段。 */
     private void fillS5ProxyStatus(CloudContainer container)
     {
         if (StringUtils.isBlank(container.getRawJson()))
@@ -702,6 +744,7 @@ public class CloudContainerServiceImpl implements ICloudContainerService
         }
     }
 
+    /** 按实例位推导 Android API、RPA、摄像头和 WebRTC 端口。 */
     private void fillDerivedPorts(CloudContainer container)
     {
         if (container.getIndexNum() == null)
@@ -727,6 +770,7 @@ public class CloudContainerServiceImpl implements ICloudContainerService
         }
     }
 
+    /** 调用 SDK 启动容器并刷新本地状态。 */
     private void startContainer(CloudContainer container)
     {
         CloudHost host = requireHost(container.getHostId());
@@ -734,6 +778,7 @@ public class CloudContainerServiceImpl implements ICloudContainerService
         refreshContainerFromSdk(host, container);
     }
 
+    /** 调用 SDK 停止容器并刷新本地状态。 */
     private void stopContainer(CloudContainer container)
     {
         CloudHost host = requireHost(container.getHostId());
@@ -741,6 +786,7 @@ public class CloudContainerServiceImpl implements ICloudContainerService
         refreshContainerFromSdk(host, container);
     }
 
+    /** 调用 SDK 重启容器并刷新本地状态。 */
     private void restartContainer(CloudContainer container)
     {
         CloudHost host = requireHost(container.getHostId());
@@ -748,6 +794,7 @@ public class CloudContainerServiceImpl implements ICloudContainerService
         refreshContainerFromSdk(host, container);
     }
 
+    /** 查询主机，不存在时抛出业务异常。 */
     private CloudHost requireHost(Long hostId)
     {
         CloudHost host = cloudHostMapper.selectCloudHostById(hostId);
@@ -758,6 +805,7 @@ public class CloudContainerServiceImpl implements ICloudContainerService
         return host;
     }
 
+    /** 从魔云腾列表中刷新单个容器的运行状态和端口信息。 */
     private void refreshContainerFromSdk(CloudHost host, CloudContainer container)
     {
         sleepAfterCommand();
@@ -790,6 +838,7 @@ public class CloudContainerServiceImpl implements ICloudContainerService
         }
     }
 
+    /** 从魔云腾列表中刷新当前主机下已入库容器的状态。 */
     private void refreshHostContainersFromSdk(CloudHost host)
     {
         List<MytAndroidContainer> sdkContainers = moyuntengSdkClient.listAndroid(host);
@@ -826,6 +875,7 @@ public class CloudContainerServiceImpl implements ICloudContainerService
         }
     }
 
+    /** 判断本地容器和魔云腾返回容器是否为同一个实例。 */
     private boolean isSameContainer(CloudContainer local, MytAndroidContainer remote)
     {
         if (StringUtils.isNotEmpty(local.getProviderContainerId())
@@ -837,6 +887,7 @@ public class CloudContainerServiceImpl implements ICloudContainerService
                 && local.getContainerName().equals(remote.getName());
     }
 
+    /** SDK 启停命令后短暂等待，让魔云腾状态有时间更新。 */
     private void sleepAfterCommand()
     {
         try
@@ -849,6 +900,7 @@ public class CloudContainerServiceImpl implements ICloudContainerService
         }
     }
 
+    /** URL 参数编码。 */
     private String encode(String value)
     {
         return URLEncoder.encode(value, StandardCharsets.UTF_8);

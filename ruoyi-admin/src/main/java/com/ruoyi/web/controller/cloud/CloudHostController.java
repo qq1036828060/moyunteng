@@ -19,6 +19,9 @@ import com.ruoyi.common.enums.BusinessType;
 import com.ruoyi.system.domain.CloudHost;
 import com.ruoyi.system.service.ICloudHostService;
 
+/**
+ * 主端云机主机管理接口。
+ */
 @RestController
 @RequestMapping("/cloud/host")
 public class CloudHostController extends BaseController
@@ -26,6 +29,7 @@ public class CloudHostController extends BaseController
     @Autowired
     private ICloudHostService cloudHostService;
 
+    /** 分页查询主机列表。 */
     @PreAuthorize("@ss.hasPermi('cloud:host:list')")
     @GetMapping("/list")
     public TableDataInfo list(CloudHost host)
@@ -35,6 +39,7 @@ public class CloudHostController extends BaseController
         return getDataTable(list);
     }
 
+    /** 查询主机详情。 */
     @PreAuthorize("@ss.hasPermi('cloud:host:query')")
     @GetMapping("/{hostId}")
     public AjaxResult getInfo(@PathVariable Long hostId)
@@ -42,6 +47,7 @@ public class CloudHostController extends BaseController
         return success(cloudHostService.selectCloudHostById(hostId));
     }
 
+    /** 新增魔云腾主机配置。 */
     @PreAuthorize("@ss.hasPermi('cloud:host:add')")
     @Log(title = "魔云腾主机", businessType = BusinessType.INSERT)
     @PostMapping
@@ -51,6 +57,7 @@ public class CloudHostController extends BaseController
         return toAjax(cloudHostService.insertCloudHost(host));
     }
 
+    /** 修改魔云腾主机配置。 */
     @PreAuthorize("@ss.hasPermi('cloud:host:edit')")
     @Log(title = "魔云腾主机", businessType = BusinessType.UPDATE)
     @PutMapping
@@ -60,6 +67,7 @@ public class CloudHostController extends BaseController
         return toAjax(cloudHostService.updateCloudHost(host));
     }
 
+    /** 删除主机配置。 */
     @PreAuthorize("@ss.hasPermi('cloud:host:remove')")
     @Log(title = "魔云腾主机", businessType = BusinessType.DELETE)
     @DeleteMapping("/{hostIds}")
@@ -68,6 +76,7 @@ public class CloudHostController extends BaseController
         return toAjax(cloudHostService.deleteCloudHostByIds(hostIds));
     }
 
+    /** 测试主机 SDK 连接。 */
     @PreAuthorize("@ss.hasPermi('cloud:host:test')")
     @Log(title = "魔云腾主机", businessType = BusinessType.OTHER)
     @PostMapping("/{hostId}/test")
@@ -76,6 +85,7 @@ public class CloudHostController extends BaseController
         return success(cloudHostService.testConnection(hostId));
     }
 
+    /** 从魔云腾同步该主机下的容器列表。 */
     @PreAuthorize("@ss.hasPermi('cloud:host:sync')")
     @Log(title = "魔云腾主机", businessType = BusinessType.OTHER)
     @PostMapping("/{hostId}/syncContainers")
@@ -84,4 +94,3 @@ public class CloudHostController extends BaseController
         return success(cloudHostService.syncContainers(hostId, getUsername()));
     }
 }
-

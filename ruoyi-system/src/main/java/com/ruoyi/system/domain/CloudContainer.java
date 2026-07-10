@@ -3,51 +3,97 @@ package com.ruoyi.system.domain;
 import java.util.Date;
 import com.ruoyi.common.core.domain.BaseEntity;
 
+/**
+ * 云机容器资源。
+ * 一条记录对应魔云腾返回的一个安卓容器/模拟器云机，并带有本系统的分配、账号绑定和调度状态。
+ */
 public class CloudContainer extends BaseEntity
 {
     private static final long serialVersionUID = 1L;
 
+    /** 容器主键ID */
     private Long containerId;
+    /** 所属主机ID */
     private Long hostId;
+    /** 魔云腾侧容器ID */
     private String providerContainerId;
+    /** 魔云腾侧容器名称，启动/停止等 SDK 指令使用 */
     private String containerName;
+    /** 实例ID，当前与 providerContainerId 保持一致 */
     private String instanceId;
+    /** 实例位序号，同一主机下一个实例位同时只允许一个云机运行 */
     private Integer indexNum;
+    /** 容器运行状态，例如 running/stopped */
     private String containerStatus;
+    /** 调度状态，例如 IDLE/BUSY */
     private String scheduleStatus;
+    /** 安卓类型：V2 容器云机，V3 模拟器云机 */
     private String androidType;
+    /** 容器内部IP，仅作为备用信息，外部控制优先使用主机IP+实例位端口 */
     private String containerIp;
+    /** Docker/容器网络名称 */
     private String networkName;
+    /** 镜像名称 */
     private String image;
+    /** 屏幕宽度 */
     private Integer width;
+    /** 屏幕高度 */
     private Integer height;
+    /** 屏幕 DPI */
     private Integer dpi;
+    /** WebRTC TCP 端口 */
     private Integer webrtcTcpPort;
+    /** WebRTC UDP 端口 */
     private Integer webrtcUdpPort;
+    /** ADB 端口 */
     private Integer adbPort;
+    /** Android API 端口，按 30000 + (index - 1) * 100 + 1 推导 */
     private Integer androidApiPort;
+    /** Android RPA 端口 */
     private Integer androidRpaPort;
+    /** 虚拟摄像头 TCP 端口 */
     private Integer cameraTcpPort;
+    /** 虚拟摄像头 UDP 端口 */
     private Integer cameraUdpPort;
+    /** 展示用云机类型名称 */
     private String cloudMachineType;
+    /** S5 代理用户名，来自 rawJson 或用户设置 */
     private String s5User;
+    /** S5 代理密码，来自 rawJson 或用户设置 */
     private String s5Password;
+    /** S5 代理IP，来自 rawJson 或用户设置 */
     private String s5Ip;
+    /** S5 代理端口，来自 rawJson 或用户设置 */
     private String s5Port;
+    /** S5 代理类型，0 表示未开启/关闭 */
     private String s5Type;
+    /** 展示用 S5 代理状态 */
     private String s5Status;
+    /** 当前执行中的任务ID，预留给后续任务调度 */
     private Long currentTaskId;
+    /** 已绑定业务账号ID，预留字段 */
     private Long boundAccountId;
+    /** 已绑定业务账号编号 */
     private String boundAccountNo;
+    /** 分配给的系统用户ID */
     private Long assignedUserId;
+    /** 分配给的系统用户名 */
     private String assignedUserName;
+    /** 聚合展示：同实例位容器总数 */
     private Integer containerCount;
+    /** 聚合展示：同实例位运行中容器数 */
     private Integer runningCount;
+    /** 聚合展示：同实例位已分配容器数 */
     private Integer assignedCount;
+    /** 锁持有者，预留给任务互斥控制 */
     private String lockOwner;
+    /** 锁过期时间，预留给任务互斥控制 */
     private Date lockExpireTime;
+    /** 最近一次心跳时间，预留给 Agent 上报 */
     private Date lastHeartbeatTime;
+    /** 魔云腾原始 JSON，以及 S5 代理等扩展状态缓存 */
     private String rawJson;
+    /** 删除标志：0 正常，1 删除 */
     private String delFlag;
 
     public Long getContainerId() { return containerId; }

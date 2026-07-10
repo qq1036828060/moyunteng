@@ -24,6 +24,10 @@ import com.ruoyi.system.domain.CloudHost;
 import com.ruoyi.system.domain.CloudSdkCallLog;
 import com.ruoyi.system.mapper.CloudSdkCallLogMapper;
 
+/**
+ * 魔云腾 SDK 与 Android API 客户端实现。
+ * 同时负责统一日志记录、旧版 SDK 降级和实例位端口推导。
+ */
 @Component
 public class MoyuntengSdkClientImpl implements MoyuntengSdkClient
 {
@@ -36,6 +40,7 @@ public class MoyuntengSdkClientImpl implements MoyuntengSdkClient
     @Autowired
     private CloudSdkCallLogMapper sdkCallLogMapper;
 
+    /** 查询魔云腾主机版本信息。 */
     @Override
     public Map<String, Object> getInfo(CloudHost host)
     {
@@ -46,6 +51,7 @@ public class MoyuntengSdkClientImpl implements MoyuntengSdkClient
         return result;
     }
 
+    /** 查询魔云腾安卓容器列表，并转换为本系统中间模型。 */
     @Override
     public List<MytAndroidContainer> listAndroid(CloudHost host)
     {
@@ -90,24 +96,28 @@ public class MoyuntengSdkClientImpl implements MoyuntengSdkClient
         return result;
     }
 
+    /** 启动指定容器。 */
     @Override
     public void startAndroid(CloudHost host, String containerName)
     {
         command(host, "/android/start", containerName);
     }
 
+    /** 停止指定容器。 */
     @Override
     public void stopAndroid(CloudHost host, String containerName)
     {
         command(host, "/android/stop", containerName);
     }
 
+    /** 重启指定容器。 */
     @Override
     public void restartAndroid(CloudHost host, String containerName)
     {
         command(host, "/android/restart", containerName);
     }
 
+    /** 建立 RPA 控制连接；旧版本 SDK 返回 404 时忽略，由后续命令降级处理。 */
     @Override
     public void connectRpa(CloudHost host, String containerName)
     {
@@ -124,6 +134,7 @@ public class MoyuntengSdkClientImpl implements MoyuntengSdkClient
         }
     }
 
+    /** 打开 Android 应用，RPA 不可用时降级为 android exec + monkey。 */
     @Override
     public void openApp(CloudHost host, String containerName, String packageName)
     {
@@ -145,6 +156,7 @@ public class MoyuntengSdkClientImpl implements MoyuntengSdkClient
         }
     }
 
+    /** 关闭 Android 应用，RPA 不可用时走降级命令。 */
     @Override
     public void shutDownApp(CloudHost host, String containerName, String packageName)
     {
@@ -166,6 +178,7 @@ public class MoyuntengSdkClientImpl implements MoyuntengSdkClient
         }
     }
 
+    /** 执行屏幕点击，RPA 不可用时降级为 input tap。 */
     @Override
     public void click(CloudHost host, String containerName, int x, int y)
     {
@@ -187,6 +200,7 @@ public class MoyuntengSdkClientImpl implements MoyuntengSdkClient
         }
     }
 
+    /** 执行 shell 命令，RPA 不可用时降级为 /android/exec。 */
     @Override
     public Map<String, Object> shell(CloudHost host, String containerName, String command, int timeoutSeconds)
     {
@@ -208,6 +222,7 @@ public class MoyuntengSdkClientImpl implements MoyuntengSdkClient
         }
     }
 
+    /** 通过 Android API 设置或关闭 S5 代理。 */
     @Override
     public Map<String, Object> updateS5Proxy(CloudHost host, CloudContainer container, CloudContainerProxyRequest request)
     {
@@ -226,6 +241,7 @@ public class MoyuntengSdkClientImpl implements MoyuntengSdkClient
         return queryS5Proxy(host, container);
     }
 
+    /** 通过 Android API 查询当前 S5 代理状态。 */
     @Override
     public Map<String, Object> queryS5Proxy(CloudHost host, CloudContainer container)
     {
@@ -243,6 +259,7 @@ public class MoyuntengSdkClientImpl implements MoyuntengSdkClient
         return result;
     }
 
+    /** 按容器名称查找魔云腾安卓实例。 */
     @Override
     public MytAndroidContainer getAndroidByName(CloudHost host, String containerName)
     {
@@ -257,6 +274,7 @@ public class MoyuntengSdkClientImpl implements MoyuntengSdkClient
         return null;
     }
 
+    /** 上传文件到安卓实例 /upload，用于虚拟摄像头图片源。 */
     @Override
     public String uploadAndroidFile(CloudHost host, CloudContainer container, MultipartFile file, String remoteFileName)
     {
@@ -291,6 +309,7 @@ public class MoyuntengSdkClientImpl implements MoyuntengSdkClient
         }
     }
 
+    /** 调用 modifydev 设置虚拟摄像头来源。 */
     @Override
     public void setVirtualCameraSource(CloudHost host, CloudContainer container, String type, String path, Integer resolution)
     {
@@ -302,12 +321,14 @@ public class MoyuntengSdkClientImpl implements MoyuntengSdkClient
         androidApiGet(host, container, query);
     }
 
+    /** 调用 camera?cmd=start 启动虚拟摄像头。 */
     @Override
     public void startVirtualCamera(CloudHost host, CloudContainer container, String path)
     {
         androidApiGet(host, container, "/camera?cmd=start&path=" + encode(path));
     }
 
+    /** 发送只需要容器名称的魔云腾 SDK 命令。 */
     private void command(CloudHost host, String path, String containerName)
     {
         JSONObject body = new JSONObject();
@@ -315,6 +336,7 @@ public class MoyuntengSdkClientImpl implements MoyuntengSdkClient
         request(host, "POST", path, body.toJSONString());
     }
 
+    /** 通过 /android/exec 在容器中执行 shell 命令。 */
     private JSONObject androidExec(CloudHost host, String containerName, String command)
     {
         JSONObject body = new JSONObject();
@@ -327,6 +349,7 @@ public class MoyuntengSdkClientImpl implements MoyuntengSdkClient
         return request(host, "POST", "/android/exec", body.toJSONString());
     }
 
+    /** 调用单个安卓实例的 Android API GET 接口，并记录调用日志。 */
     private JSONObject androidApiGet(CloudHost host, CloudContainer container, String path)
     {
         long start = System.currentTimeMillis();
@@ -366,6 +389,7 @@ public class MoyuntengSdkClientImpl implements MoyuntengSdkClient
         }
     }
 
+    /** 生成 Android API 基础地址，优先使用主机IP和实例位推导端口。 */
     private String androidApiBaseUrl(CloudHost host, CloudContainer container)
     {
         String ip = host.getHostIp();
@@ -385,6 +409,7 @@ public class MoyuntengSdkClientImpl implements MoyuntengSdkClient
         return "http://" + ip + ":" + port;
     }
 
+    /** 手工构造 multipart/form-data 请求体，避免额外依赖。 */
     private byte[] buildMultipartPayload(String boundary, String fieldName, String filename, MultipartFile file) throws Exception
     {
         String header = "--" + boundary + "\r\n"
@@ -401,6 +426,7 @@ public class MoyuntengSdkClientImpl implements MoyuntengSdkClient
         return payload;
     }
 
+    /** 从 Android API 响应中提取最有用的错误信息。 */
     private String firstMessage(JSONObject json)
     {
         String message = json.getString("msg");
@@ -417,11 +443,13 @@ public class MoyuntengSdkClientImpl implements MoyuntengSdkClient
         return StringUtils.isBlank(message) ? json.toJSONString() : message;
     }
 
+    /** URL 参数编码。 */
     private String encode(String value)
     {
         return URLEncoder.encode(StringUtils.defaultString(value), StandardCharsets.UTF_8);
     }
 
+    /** 调用魔云腾盒子 SDK API，并统一校验 code=0。 */
     private JSONObject request(CloudHost host, String method, String path, String body)
     {
         long start = System.currentTimeMillis();
@@ -469,12 +497,14 @@ public class MoyuntengSdkClientImpl implements MoyuntengSdkClient
         }
     }
 
+    /** 判断 SDK 是否返回 404/Not Found，用于旧版能力降级。 */
     private boolean isNotFound(ServiceException e)
     {
         String message = e.getMessage();
         return message != null && (message.contains("HTTP 404") || message.contains("Not Found"));
     }
 
+    /** 生成魔云腾盒子 SDK API 基础地址。 */
     private String baseUrl(CloudHost host)
     {
         if (StringUtils.isNotEmpty(host.getApiBaseUrl()))
@@ -485,6 +515,7 @@ public class MoyuntengSdkClientImpl implements MoyuntengSdkClient
         return "http://" + host.getHostIp() + ":" + port;
     }
 
+    /** 从 Docker portBindings 中读取宿主机端口。 */
     private Integer readHostPort(JSONObject item, String key)
     {
         JSONObject portBindings = item.getJSONObject("portBindings");
@@ -500,6 +531,7 @@ public class MoyuntengSdkClientImpl implements MoyuntengSdkClient
         return bindings.getJSONObject(0).getInteger("HostPort");
     }
 
+    /** portBindings 缺失时按实例位端口公式补齐控制端口。 */
     private void fillPortsByIndex(MytAndroidContainer container)
     {
         if (container.getIndexNum() == null)
@@ -537,6 +569,7 @@ public class MoyuntengSdkClientImpl implements MoyuntengSdkClient
         }
     }
 
+    /** 写入 SDK 调用日志；日志失败不能影响主流程。 */
     private void log(CloudHost host, String path, String method, String requestBody, String responseBody,
             Integer resultCode, boolean success, String errorMsg, long start)
     {
@@ -560,11 +593,13 @@ public class MoyuntengSdkClientImpl implements MoyuntengSdkClient
         }
     }
 
+    /** 按默认长度截断日志字段。 */
     private String limitLogText(String value)
     {
         return limitLogText(value, LOG_TEXT_LIMIT);
     }
 
+    /** 按指定长度截断日志字段，避免数据库字段过长。 */
     private String limitLogText(String value, int limit)
     {
         if (value == null || value.length() <= limit)

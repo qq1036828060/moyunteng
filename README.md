@@ -131,3 +131,8 @@
   - Start/configure: `GET /proxy?cmd=2&type={type}&ip={ip}&port={port}&usr={usr}&pwd={pwd}`.
   - Stop: `GET /proxy?cmd=3`.
 - [x] S5 proxy status from `/proxy` is written back to container `raw_json` and returned in the user cloud machine list.
+## 2026-07-10 Backend Chinese comments
+
+- [x] Added Chinese comments for cloud host, container, SDK call log, assign request, proxy request, and Moyunteng Android container models.
+- [x] Added Chinese method comments for cloud host/container services, mappers, controllers, and Moyunteng SDK client.
+- [x] Added key implementation comments for WebRTC control preparation, QQ scan virtual camera flow, S5 proxy Android API flow, container sync, port derivation, and SDK call logging.

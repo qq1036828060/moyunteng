@@ -19,6 +19,9 @@ import com.ruoyi.system.mapper.CloudContainerMapper;
 import com.ruoyi.system.mapper.CloudHostMapper;
 import com.ruoyi.system.service.ICloudHostService;
 
+/**
+ * 云机主机管理服务实现。
+ */
 @Service
 public class CloudHostServiceImpl implements ICloudHostService
 {
@@ -31,18 +34,21 @@ public class CloudHostServiceImpl implements ICloudHostService
     @Autowired
     private MoyuntengSdkClient moyuntengSdkClient;
 
+    /** 查询主机列表。 */
     @Override
     public List<CloudHost> selectCloudHostList(CloudHost host)
     {
         return cloudHostMapper.selectCloudHostList(host);
     }
 
+    /** 查询主机详情。 */
     @Override
     public CloudHost selectCloudHostById(Long hostId)
     {
         return cloudHostMapper.selectCloudHostById(hostId);
     }
 
+    /** 新增主机，并补齐默认 SDK 端口、基础地址和初始状态。 */
     @Override
     public int insertCloudHost(CloudHost host)
     {
@@ -62,6 +68,7 @@ public class CloudHostServiceImpl implements ICloudHostService
         return cloudHostMapper.insertCloudHost(host);
     }
 
+    /** 更新主机配置，并按 IP/端口补齐 SDK 基础地址。 */
     @Override
     public int updateCloudHost(CloudHost host)
     {
@@ -69,12 +76,14 @@ public class CloudHostServiceImpl implements ICloudHostService
         return cloudHostMapper.updateCloudHost(host);
     }
 
+    /** 批量删除主机。 */
     @Override
     public int deleteCloudHostByIds(Long[] hostIds)
     {
         return cloudHostMapper.deleteCloudHostByIds(hostIds);
     }
 
+    /** 调用魔云腾 /info 测试连接，并回写版本、在线状态和同步时间。 */
     @Override
     public Map<String, Object> testConnection(Long hostId)
     {
@@ -88,6 +97,7 @@ public class CloudHostServiceImpl implements ICloudHostService
         return info;
     }
 
+    /** 同步魔云腾 /android 容器列表，处理新增、更新、恢复和删除标记。 */
     @Override
     public int syncContainers(Long hostId, String operator)
     {
@@ -135,6 +145,7 @@ public class CloudHostServiceImpl implements ICloudHostService
         return count;
     }
 
+    /** 查询实例位归属，用于同步新增容器时继承同实例位的用户分配。 */
     private Map<Integer, CloudContainer> selectSlotAssignments(Long hostId)
     {
         CloudContainer query = new CloudContainer();
@@ -163,6 +174,7 @@ public class CloudHostServiceImpl implements ICloudHostService
         return assignments;
     }
 
+    /** 给同步到的新容器继承同实例位已有的用户分配关系。 */
     private void inheritSlotAssignment(CloudContainer container, Map<Integer, CloudContainer> slotAssignments)
     {
         if (container.getIndexNum() == null)
@@ -178,6 +190,7 @@ public class CloudHostServiceImpl implements ICloudHostService
         container.setAssignedUserName(assignment.getAssignedUserName());
     }
 
+    /** 查询主机，不存在时抛出业务异常。 */
     private CloudHost requireHost(Long hostId)
     {
         CloudHost host = cloudHostMapper.selectCloudHostById(hostId);
@@ -188,6 +201,7 @@ public class CloudHostServiceImpl implements ICloudHostService
         return host;
     }
 
+    /** 补齐主机默认端口和 SDK 基础地址。 */
     private void normalizeHost(CloudHost host)
     {
         if (host.getApiPort() == null)

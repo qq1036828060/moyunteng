@@ -18,6 +18,9 @@ import com.ruoyi.system.domain.CloudContainer;
 import com.ruoyi.system.domain.CloudContainerAssignRequest;
 import com.ruoyi.system.service.ICloudContainerService;
 
+/**
+ * 主端容器资源池管理接口。
+ */
 @RestController
 @RequestMapping("/cloud/container")
 public class CloudContainerController extends BaseController
@@ -25,6 +28,7 @@ public class CloudContainerController extends BaseController
     @Autowired
     private ICloudContainerService cloudContainerService;
 
+    /** 分页查询按实例位聚合后的容器资源池。 */
     @PreAuthorize("@ss.hasPermi('cloud:container:list')")
     @GetMapping("/list")
     public TableDataInfo list(CloudContainer container)
@@ -34,6 +38,7 @@ public class CloudContainerController extends BaseController
         return getDataTable(list);
     }
 
+    /** 查询容器详情。 */
     @PreAuthorize("@ss.hasPermi('cloud:container:query')")
     @GetMapping("/{containerId}")
     public AjaxResult getInfo(@PathVariable Long containerId)
@@ -41,6 +46,7 @@ public class CloudContainerController extends BaseController
         return success(cloudContainerService.selectCloudContainerById(containerId));
     }
 
+    /** 按主机实例位批量分配云机给用户。 */
     @PreAuthorize("@ss.hasPermi('cloud:container:assign')")
     @Log(title = "云机容器分配", businessType = BusinessType.UPDATE)
     @PostMapping("/assign")
@@ -49,6 +55,7 @@ public class CloudContainerController extends BaseController
         return toAjax(cloudContainerService.assignContainerByHostIndex(request, getUsername()));
     }
 
+    /** 取消单个容器分配。 */
     @PreAuthorize("@ss.hasPermi('cloud:container:assign')")
     @Log(title = "云机容器取消分配", businessType = BusinessType.UPDATE)
     @PostMapping("/{containerId}/unassign")
@@ -57,6 +64,7 @@ public class CloudContainerController extends BaseController
         return toAjax(cloudContainerService.unassignContainer(containerId));
     }
 
+    /** 按主机实例位取消分配。 */
     @PreAuthorize("@ss.hasPermi('cloud:container:assign')")
     @Log(title = "云机实例位取消分配", businessType = BusinessType.UPDATE)
     @PostMapping("/unassign-slot")
@@ -65,6 +73,7 @@ public class CloudContainerController extends BaseController
         return toAjax(cloudContainerService.unassignContainerByHostIndex(request));
     }
 
+    /** 主端启动容器。 */
     @PreAuthorize("@ss.hasPermi('cloud:container:start')")
     @Log(title = "云机容器", businessType = BusinessType.OTHER)
     @PostMapping("/{containerId}/start")
@@ -74,6 +83,7 @@ public class CloudContainerController extends BaseController
         return success();
     }
 
+    /** 主端停止容器。 */
     @PreAuthorize("@ss.hasPermi('cloud:container:stop')")
     @Log(title = "云机容器", businessType = BusinessType.OTHER)
     @PostMapping("/{containerId}/stop")
@@ -83,6 +93,7 @@ public class CloudContainerController extends BaseController
         return success();
     }
 
+    /** 主端重启容器。 */
     @PreAuthorize("@ss.hasPermi('cloud:container:restart')")
     @Log(title = "云机容器", businessType = BusinessType.OTHER)
     @PostMapping("/{containerId}/restart")
@@ -92,6 +103,7 @@ public class CloudContainerController extends BaseController
         return success();
     }
 
+    /** 释放容器调度、分配和账号绑定资源。 */
     @PreAuthorize("@ss.hasPermi('cloud:container:release')")
     @Log(title = "云机容器", businessType = BusinessType.UPDATE)
     @PostMapping("/{containerId}/release")

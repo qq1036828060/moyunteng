@@ -1,30 +1,58 @@
 package com.ruoyi.system.cloud;
 
+/**
+ * 魔云腾 /android 接口返回的安卓实例信息。
+ * 该对象只承载第三方接口结果，入库前会转换为 CloudContainer。
+ */
 public class MytAndroidContainer
 {
+    /** 魔云腾容器ID */
     private String id;
+    /** 魔云腾容器名称 */
     private String name;
+    /** 运行状态，例如 running/stopped */
     private String status;
+    /** 安卓类型：V2 容器云机，V3 模拟器云机 */
     private String androidType;
+    /** 实例位序号 */
     private Integer indexNum;
+    /** 容器内部IP */
     private String ip;
+    /** 网络名称 */
     private String networkName;
+    /** 镜像名称 */
     private String image;
+    /** 屏幕宽度 */
     private Integer width;
+    /** 屏幕高度 */
     private Integer height;
+    /** 屏幕 DPI */
     private Integer dpi;
+    /** WebRTC TCP 端口 */
     private Integer webrtcTcpPort;
+    /** WebRTC UDP 端口 */
     private Integer webrtcUdpPort;
+    /** ADB 端口 */
     private Integer adbPort;
+    /** Android API 端口 */
     private Integer androidApiPort;
+    /** Android RPA 端口 */
     private Integer androidRpaPort;
+    /** 摄像头 TCP 端口 */
     private Integer cameraTcpPort;
+    /** 摄像头 UDP 端口 */
     private Integer cameraUdpPort;
+    /** S5 代理用户名 */
     private String s5User;
+    /** S5 代理密码 */
     private String s5Password;
+    /** S5 代理IP */
     private String s5Ip;
+    /** S5 代理端口 */
     private String s5Port;
+    /** S5 代理类型 */
     private String s5Type;
+    /** 魔云腾原始 JSON */
     private String rawJson;
 
     public String getId() { return id; }

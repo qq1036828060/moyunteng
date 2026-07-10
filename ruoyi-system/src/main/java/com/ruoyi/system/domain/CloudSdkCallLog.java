@@ -2,20 +2,37 @@ package com.ruoyi.system.domain;
 
 import java.util.Date;
 
+/**
+ * 魔云腾 SDK / Android API 调用日志。
+ * 用于排查接口请求、响应、耗时和失败原因。
+ */
 public class CloudSdkCallLog
 {
+    /** 日志主键ID */
     private Long logId;
+    /** 调用所属主机ID */
     private Long hostId;
+    /** 预留任务ID，后续任务调度接入后写入 */
     private Long taskId;
+    /** 调用所属容器ID */
     private Long containerId;
+    /** API 路径 */
     private String apiPath;
+    /** HTTP 方法 */
     private String httpMethod;
+    /** 请求体或关键请求参数 */
     private String requestBody;
+    /** 响应体 */
     private String responseBody;
+    /** 业务返回码 */
     private Integer resultCode;
+    /** 是否成功：1 成功，0 失败 */
     private String success;
+    /** 失败原因 */
     private String errorMsg;
+    /** 调用耗时，单位毫秒 */
     private Integer costMs;
+    /** 创建时间 */
     private Date createTime;
 
     public Long getLogId() { return logId; }
@@ -45,4 +62,3 @@ public class CloudSdkCallLog
     public Date getCreateTime() { return createTime; }
     public void setCreateTime(Date createTime) { this.createTime = createTime; }
 }
-
