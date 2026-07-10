@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.ArrayList;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.ruoyi.common.exception.ServiceException;
@@ -93,9 +94,14 @@ public class CloudHostServiceImpl implements ICloudHostService
         CloudHost host = requireHost(hostId);
         List<MytAndroidContainer> containers = moyuntengSdkClient.listAndroid(host);
         Map<Integer, CloudContainer> slotAssignments = selectSlotAssignments(host.getHostId());
+        List<String> providerContainerIds = new ArrayList<>();
         int count = 0;
         for (MytAndroidContainer item : containers)
         {
+            if (StringUtils.isNotEmpty(item.getId()))
+            {
+                providerContainerIds.add(item.getId());
+            }
             CloudContainer container = new CloudContainer();
             container.setHostId(host.getHostId());
             container.setProviderContainerId(item.getId());
@@ -120,6 +126,7 @@ public class CloudHostServiceImpl implements ICloudHostService
             cloudContainerMapper.upsertCloudContainer(container);
             count++;
         }
+        cloudContainerMapper.markDeletedByMissingProviderIds(host.getHostId(), providerContainerIds);
         host.setOnlineStatus("ONLINE");
         host.setContainerCapacity(count);
         host.setLastSyncTime(new Date());

@@ -209,17 +209,38 @@ public class MoyuntengSdkClientImpl implements MoyuntengSdkClient
     }
 
     @Override
-    public void updateS5Proxy(CloudHost host, String containerName, CloudContainerProxyRequest request)
+    public Map<String, Object> updateS5Proxy(CloudHost host, CloudContainer container, CloudContainerProxyRequest request)
     {
-        JSONObject body = new JSONObject();
-        body.put("name", containerName);
         String s5Type = StringUtils.isBlank(request.getS5Type()) ? "1" : request.getS5Type();
-        body.put("s5Type", s5Type);
-        body.put("s5IP", StringUtils.defaultString(request.getS5Ip()));
-        body.put("s5Port", StringUtils.defaultString(request.getS5Port()));
-        body.put("s5User", StringUtils.defaultString(request.getS5User()));
-        body.put("s5Password", StringUtils.defaultString(request.getS5Password()));
-        request(host, "PUT", "/android", body.toJSONString());
+        if ("0".equals(s5Type))
+        {
+            androidApiGet(host, container, "/proxy?cmd=3");
+            return queryS5Proxy(host, container);
+        }
+        String path = "/proxy?cmd=2&type=" + encode(s5Type)
+                + "&ip=" + encode(request.getS5Ip())
+                + "&port=" + encode(request.getS5Port())
+                + "&usr=" + encode(request.getS5User())
+                + "&pwd=" + encode(request.getS5Password());
+        androidApiGet(host, container, path);
+        return queryS5Proxy(host, container);
+    }
+
+    @Override
+    public Map<String, Object> queryS5Proxy(CloudHost host, CloudContainer container)
+    {
+        JSONObject json = androidApiGet(host, container, "/proxy");
+        JSONObject data = json.getJSONObject("data");
+        Map<String, Object> result = new HashMap<>();
+        if (data != null)
+        {
+            result.put("status", data.getInteger("status"));
+            result.put("statusText", data.getString("statusText"));
+            result.put("addr", data.getString("addr"));
+            result.put("type", data.getInteger("type"));
+        }
+        result.put("raw", json.toJSONString());
+        return result;
     }
 
     @Override

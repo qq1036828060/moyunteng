@@ -393,8 +393,8 @@ public class CloudContainerServiceImpl implements ICloudContainerService
         CloudContainer container = requireOwnedContainer(userId, containerId);
         CloudHost host = requireHost(container.getHostId());
         normalizeS5ProxyRequest(request);
-        moyuntengSdkClient.updateS5Proxy(host, container.getContainerName(), request);
-        refreshContainerFromSdk(host, container);
+        Map<String, Object> proxyStatus = moyuntengSdkClient.updateS5Proxy(host, container, request);
+        updateLocalS5ProxyStatus(container, request, proxyStatus);
         return requireOwnedContainer(userId, containerId);
     }
 
@@ -403,8 +403,49 @@ public class CloudContainerServiceImpl implements ICloudContainerService
     {
         CloudContainer container = requireOwnedContainer(userId, containerId);
         CloudHost host = requireHost(container.getHostId());
-        refreshContainerFromSdk(host, container);
+        Map<String, Object> proxyStatus = moyuntengSdkClient.queryS5Proxy(host, container);
+        updateLocalS5ProxyStatus(container, null, proxyStatus);
         return requireOwnedContainer(userId, containerId);
+    }
+
+    private void updateLocalS5ProxyStatus(CloudContainer container, CloudContainerProxyRequest request, Map<String, Object> proxyStatus)
+    {
+        JSONObject raw = new JSONObject();
+        if (StringUtils.isNotBlank(container.getRawJson()))
+        {
+            try
+            {
+                raw = JSONObject.parseObject(container.getRawJson());
+            }
+            catch (Exception e)
+            {
+                raw = new JSONObject();
+            }
+        }
+        if (request != null)
+        {
+            raw.put("s5IP", request.getS5Ip());
+            raw.put("s5Port", request.getS5Port());
+            raw.put("s5User", request.getS5User());
+            raw.put("s5Password", request.getS5Password());
+            raw.put("s5Type", request.getS5Type());
+        }
+        if (proxyStatus != null)
+        {
+            raw.put("proxyStatus", proxyStatus.get("status"));
+            raw.put("proxyStatusText", proxyStatus.get("statusText"));
+            raw.put("proxyAddr", proxyStatus.get("addr"));
+            raw.put("proxyType", proxyStatus.get("type"));
+            Object status = proxyStatus.get("status");
+            if (status != null && "0".equals(String.valueOf(status)))
+            {
+                raw.put("s5Type", "0");
+            }
+        }
+        CloudContainer update = new CloudContainer();
+        update.setContainerId(container.getContainerId());
+        update.setRawJson(raw.toJSONString());
+        cloudContainerMapper.updateCloudContainer(update);
     }
 
     private void normalizeS5ProxyRequest(CloudContainerProxyRequest request)
@@ -640,7 +681,13 @@ public class CloudContainerServiceImpl implements ICloudContainerService
             container.setS5Ip(json.getString("s5IP"));
             container.setS5Port(json.getString("s5Port"));
             container.setS5Type(json.getString("s5Type"));
-            if ("0".equals(container.getS5Type()) || StringUtils.isBlank(container.getS5Ip()))
+            String proxyStatusText = json.getString("proxyStatusText");
+            String proxyAddr = json.getString("proxyAddr");
+            if (StringUtils.isNotBlank(proxyStatusText))
+            {
+                container.setS5Status(StringUtils.isBlank(proxyAddr) ? proxyStatusText : proxyStatusText + " " + proxyAddr);
+            }
+            else if ("0".equals(container.getS5Type()) || StringUtils.isBlank(container.getS5Ip()))
             {
                 container.setS5Status("未开启");
             }

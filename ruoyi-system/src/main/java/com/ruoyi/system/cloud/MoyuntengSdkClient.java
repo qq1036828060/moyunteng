@@ -29,7 +29,9 @@ public interface MoyuntengSdkClient
 
     Map<String, Object> shell(CloudHost host, String containerName, String command, int timeoutSeconds);
 
-    void updateS5Proxy(CloudHost host, String containerName, CloudContainerProxyRequest request);
+    Map<String, Object> updateS5Proxy(CloudHost host, CloudContainer container, CloudContainerProxyRequest request);
+
+    Map<String, Object> queryS5Proxy(CloudHost host, CloudContainer container);
 
     MytAndroidContainer getAndroidByName(CloudHost host, String containerName);
 

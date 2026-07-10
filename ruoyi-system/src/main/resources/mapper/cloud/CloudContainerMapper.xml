@@ -246,6 +246,25 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             update_time = sysdate()
     </insert>
 
+    <update id="markDeletedByMissingProviderIds">
+        update cloud_container
+        set del_flag = '1',
+            update_time = sysdate()
+        where host_id = #{hostId}
+          and del_flag = '0'
+        <choose>
+            <when test="providerContainerIds != null and providerContainerIds.size() > 0">
+                and provider_container_id not in
+                <foreach collection="providerContainerIds" item="providerContainerId" open="(" separator="," close=")">
+                    #{providerContainerId}
+                </foreach>
+            </when>
+            <otherwise>
+                and 1 = 1
+            </otherwise>
+        </choose>
+    </update>
+
     <update id="releaseCloudContainer" parameterType="Long">
         update cloud_container
         set schedule_status = 'IDLE', current_task_id = null, lock_owner = null, lock_expire_time = null, update_time = sysdate()

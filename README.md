@@ -122,3 +122,12 @@
 - [x] Added `sql/cloud_myt_log_longtext.sql` for existing databases.
 - [x] SDK call logging now truncates oversized request/response/error text before insert.
 - [x] SDK log insert failures no longer interrupt cloud host/container operations such as container sync.
+## 2026-07-10 Container sync and S5 Android API fixes
+
+- [x] Container sync now handles removed containers: records missing from the latest Moyunteng `/android` response are marked `del_flag = '1'`, so admin and user lists no longer show removed cloud machines.
+- [x] If a removed container appears again later, existing upsert logic restores it with `del_flag = '0'`.
+- [x] User S5 proxy setup now uses Android API instead of box SDK:
+  - Query status: `GET /proxy`.
+  - Start/configure: `GET /proxy?cmd=2&type={type}&ip={ip}&port={port}&usr={usr}&pwd={pwd}`.
+  - Stop: `GET /proxy?cmd=3`.
+- [x] S5 proxy status from `/proxy` is written back to container `raw_json` and returned in the user cloud machine list.

@@ -1,6 +1,7 @@
 package com.ruoyi.system.mapper;
 
 import java.util.List;
+import org.apache.ibatis.annotations.Param;
 import com.ruoyi.system.domain.CloudContainer;
 
 public interface CloudContainerMapper
@@ -20,6 +21,8 @@ public interface CloudContainerMapper
     int updateCloudContainer(CloudContainer container);
 
     int upsertCloudContainer(CloudContainer container);
+
+    int markDeletedByMissingProviderIds(@Param("hostId") Long hostId, @Param("providerContainerIds") List<String> providerContainerIds);
 
     int releaseCloudContainer(Long containerId);
 
