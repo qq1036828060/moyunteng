@@ -513,9 +513,9 @@ public class CloudContainerServiceImpl implements ICloudContainerService
         sleepRpaStep(800);
         moyuntengSdkClient.click(host, container.getContainerName(), scale(width, 0.78D), scale(height, 0.38D));
         sleepRpaStep(8000);
-        moyuntengSdkClient.click(host, container.getContainerName(), scale(width, 0.50D), scale(height, 0.80D));
-//        sleepRpaStep(1800);
-//        moyuntengSdkClient.shutDownApp(host, container.getContainerName(), QQ_PACKAGE_NAME);
+        moyuntengSdkClient.click(host, container.getContainerName(), scale(width, 0.50D), scale(height, 0.85D));
+        sleepRpaStep(1800);
+        moyuntengSdkClient.shutDownApp(host, container.getContainerName(), QQ_PACKAGE_NAME);
     }
 
     /** 生成覆盖式上传到 Android 实例的二维码文件名。 */
