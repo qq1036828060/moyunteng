@@ -136,3 +136,13 @@
 - [x] Added Chinese comments for cloud host, container, SDK call log, assign request, proxy request, and Moyunteng Android container models.
 - [x] Added Chinese method comments for cloud host/container services, mappers, controllers, and Moyunteng SDK client.
 - [x] Added key implementation comments for WebRTC control preparation, QQ scan virtual camera flow, S5 proxy Android API flow, container sync, port derivation, and SDK call logging.
+
+## 2026-08-05 saohao 分支支付扫码后端
+
+- [x] 新建 `saohao` 后端分支，复用主机管理、容器同步和魔云腾 SDK/Android API 能力。
+- [x] 新增 `POST /cloud/saohao/pay/scan`，按当前登录用户查询已分配云机实例。
+- [x] 支持上传二维码、设置并启动虚拟摄像头、打开支付宝、坐标点击“扫一扫”和“极速付款”。
+- [x] 支持按 `720 x 1280` 参考图坐标映射六位数字支付密码，并按云机实际分辨率缩放。
+- [x] 支付密码不保存、不回传，并关闭该接口操作日志的请求参数记录。
+- [x] Android `/upload` 成功后的资源路径统一为 `/upload/{文件名}`。
+- [x] 详细接口和坐标说明见 `README_SAOHAO.md`。

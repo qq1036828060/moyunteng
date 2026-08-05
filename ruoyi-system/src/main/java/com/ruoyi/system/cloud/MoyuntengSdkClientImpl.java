@@ -294,7 +294,7 @@ public class MoyuntengSdkClientImpl implements MoyuntengSdkClient
                 throw new ServiceException("安卓API文件上传失败: HTTP " + response.statusCode() + " "
                         + StringUtils.defaultString(response.body()));
             }
-            String remotePath = "/sdcard/upload/" + remoteFileName;
+            String remotePath = "/upload/" + remoteFileName;
             log(host, "/android-api/upload", "POST", remoteFileName, response.body(), response.statusCode(), true, null,
                     System.currentTimeMillis());
             return remotePath;
