@@ -3,6 +3,7 @@ package com.ruoyi.web.controller.cloud;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -11,6 +12,8 @@ import com.ruoyi.common.annotation.Log;
 import com.ruoyi.common.core.controller.BaseController;
 import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.common.enums.BusinessType;
+import com.ruoyi.system.domain.CloudBankCodeRequest;
+import com.ruoyi.system.domain.CloudBankPayRequest;
 import com.ruoyi.system.service.ICloudSaohaoService;
 
 /**
@@ -36,5 +39,23 @@ public class CloudSaohaoController extends BaseController
             @RequestParam(value = "filePath", required = false) String filePath)
     {
         return success(cloudSaohaoService.scanAndPay(getUserId(), containerId, file, filePath, payPassword));
+    }
+
+    /** 下发银行卡支付命令，操作到短信验证码等待页面。 */
+    @PreAuthorize("@ss.hasPermi('cloud:mycontainer:operate')")
+    @Log(title = "银行卡支付", businessType = BusinessType.OTHER, isSaveRequestData = false)
+    @PostMapping("/bank")
+    public AjaxResult bank(@RequestBody(required = false) CloudBankPayRequest request)
+    {
+        return success(cloudSaohaoService.startBankPayment(getUserId(), request));
+    }
+
+    /** 接收银行卡短信验证码并确认支付。 */
+    @PreAuthorize("@ss.hasPermi('cloud:mycontainer:operate')")
+    @Log(title = "银行卡支付验证码", businessType = BusinessType.OTHER, isSaveRequestData = false)
+    @PostMapping("/bankcode")
+    public AjaxResult bankCode(@RequestBody CloudBankCodeRequest request)
+    {
+        return success(cloudSaohaoService.submitBankCode(getUserId(), request));
     }
 }

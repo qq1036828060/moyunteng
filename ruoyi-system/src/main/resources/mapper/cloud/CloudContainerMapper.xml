@@ -270,4 +270,63 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         set schedule_status = 'IDLE', current_task_id = null, lock_owner = null, lock_expire_time = null, update_time = sysdate()
         where container_id = #{containerId}
     </update>
+
+    <update id="tryLockCloudContainerSlot">
+        update cloud_container
+        set lock_owner = #{lockOwner},
+            lock_expire_time = timestampadd(SECOND, #{lockSeconds}, sysdate()),
+            update_time = sysdate()
+        where container_id = (
+            select slot_lock_container_id
+            from (
+                select min(container_id) as slot_lock_container_id
+                from cloud_container
+                where host_id = #{hostId}
+                  and index_num = #{indexNum}
+                  and del_flag = '0'
+            ) slot_lock
+        )
+          and (lock_owner is null or lock_expire_time is null or lock_expire_time &lt;= sysdate())
+    </update>
+
+    <update id="unlockCloudContainerSlot">
+        update cloud_container
+        set lock_owner = null,
+            lock_expire_time = null,
+            update_time = sysdate()
+        where host_id = #{hostId}
+          and index_num = #{indexNum}
+          and lock_owner = #{lockOwner}
+    </update>
+
+    <select id="selectCloudContainerByUserLockOwner" resultMap="CloudContainerResult">
+        <include refid="selectCloudContainerVo"/>
+        where assigned_user_id = #{userId}
+          and lock_owner = #{lockOwner}
+          and lock_expire_time &gt; sysdate()
+          and del_flag = '0'
+        order by container_id asc
+        limit 1
+    </select>
+
+    <update id="transferCloudContainerSlotLock">
+        update cloud_container
+        set lock_owner = #{newOwner},
+            lock_expire_time = timestampadd(SECOND, #{lockSeconds}, sysdate()),
+            update_time = sysdate()
+        where host_id = #{hostId}
+          and index_num = #{indexNum}
+          and lock_owner = #{expectedOwner}
+          and lock_expire_time &gt; sysdate()
+    </update>
+
+    <update id="renewCloudContainerSlotLock">
+        update cloud_container
+        set lock_expire_time = timestampadd(SECOND, #{lockSeconds}, sysdate()),
+            update_time = sysdate()
+        where host_id = #{hostId}
+          and index_num = #{indexNum}
+          and lock_owner = #{lockOwner}
+          and lock_expire_time &gt; sysdate()
+    </update>
 </mapper>

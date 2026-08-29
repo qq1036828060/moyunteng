@@ -2,6 +2,8 @@ package com.ruoyi.system.service;
 
 import java.util.Map;
 import org.springframework.web.multipart.MultipartFile;
+import com.ruoyi.system.domain.CloudBankCodeRequest;
+import com.ruoyi.system.domain.CloudBankPayRequest;
 
 /**
  * 扫号业务云机操作服务。
@@ -20,4 +22,10 @@ public interface ICloudSaohaoService
      */
     Map<String, Object> scanAndPay(Long userId, Long containerId, MultipartFile file,
             String filePath, String payPassword);
+
+    /** 执行银行卡支付第一阶段，发送短信验证码并保持实例位锁。 */
+    Map<String, Object> startBankPayment(Long userId, CloudBankPayRequest request);
+
+    /** 接收短信验证码并继续完成银行卡支付。 */
+    Map<String, Object> submitBankCode(Long userId, CloudBankCodeRequest request);
 }

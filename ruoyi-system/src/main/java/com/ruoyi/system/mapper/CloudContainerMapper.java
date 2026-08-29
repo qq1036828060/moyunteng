@@ -53,4 +53,34 @@ public interface CloudContainerMapper
 
     /** 按主机实例位取消该实例位下所有容器分配。 */
     int unassignCloudContainerSlot(CloudContainer container);
+
+    /**
+     * 原子获取主机实例位操作锁，同一实例位同时只允许一个请求获取成功。
+     */
+    int tryLockCloudContainerSlot(@Param("hostId") Long hostId,
+            @Param("indexNum") Integer indexNum,
+            @Param("lockOwner") String lockOwner,
+            @Param("lockSeconds") Integer lockSeconds);
+
+    /** 仅由锁持有者释放主机实例位操作锁。 */
+    int unlockCloudContainerSlot(@Param("hostId") Long hostId,
+            @Param("indexNum") Integer indexNum,
+            @Param("lockOwner") String lockOwner);
+
+    /** 查询当前用户持有指定有效锁的实例位记录。 */
+    CloudContainer selectCloudContainerByUserLockOwner(@Param("userId") Long userId,
+            @Param("lockOwner") String lockOwner);
+
+    /** 原子接管实例位锁，用于跨接口任务的下一阶段。 */
+    int transferCloudContainerSlotLock(@Param("hostId") Long hostId,
+            @Param("indexNum") Integer indexNum,
+            @Param("expectedOwner") String expectedOwner,
+            @Param("newOwner") String newOwner,
+            @Param("lockSeconds") Integer lockSeconds);
+
+    /** 按锁持有者延长实例位锁有效期。 */
+    int renewCloudContainerSlotLock(@Param("hostId") Long hostId,
+            @Param("indexNum") Integer indexNum,
+            @Param("lockOwner") String lockOwner,
+            @Param("lockSeconds") Integer lockSeconds);
 }
